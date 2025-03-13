@@ -67,7 +67,7 @@
   let modelSettings = {
     temperature: 1.0,
     topK: 1,
-    systemPrompt: null
+    systemPrompt: localStorage.getItem("systemPrompt");
   };
 
   async function createSession()
@@ -80,6 +80,7 @@
       systemPrompt: modelSettings.systemPrompt,
       signal: session_controller.signal 
     });
+    localStorage.setItem("systemPrompt", modelSettings.systemPrompt);
     showBusy(false);
   }
 

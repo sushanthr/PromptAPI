@@ -92,7 +92,7 @@
     const temperatureValue = document.getElementById("temperature-value");
     const topkInput = document.getElementById("topk");
     const systemPromptInput = document.getElementById("system-prompt");
-
+    systemPromptInput.innerText = localStorage.getItem("systemPrompt");
     settingsToggle.addEventListener("click", () => {
       settingsContent.classList.toggle("hidden");
     });

@@ -77,7 +77,7 @@
     session = await window.ai.languageModel.create({ 
       temperature: modelSettings.temperature, 
       topK: modelSettings.topK,
-      systemPrompt: modelSettings.systemPrompt,
+      systemPrompt: modelSettings.systemPrompt && modelSettings.systemPrompt.trim().length == 0 ? null : modelSettings.systemPrompt,
       signal: session_controller.signal 
     });
     localStorage.setItem("systemPrompt", modelSettings.systemPrompt);

@@ -104,19 +104,16 @@ Pse`;
         {
             try
             {
-                let result = await window.ai.languageModel.capabilities();
-                if (result.available == 'no')
-                {
-                    error(kNoModelError);
+                result = await window.ai.languageModel.availability();
+                if (result == 'unavailable') {
+                  error(kNoModelError);
                 }
-                if (result.available == 'after-download')
-                {
-                    // call the API to trigger download.
-                    error(kDownloadError);
+                if (result == 'downloadable' || result == 'downloading') {
+                  // call the API to trigger download.
+                  error(kDownloadError);
                 }
-                if (result.available != 'readily')
-                {
-                    error("Cannot create model now - " + result.available);
+                if (result != 'available') {
+                  error("Cannot create model now - " + result);
                 }
             }
             catch (e)

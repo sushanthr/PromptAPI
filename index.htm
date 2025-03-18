@@ -92,7 +92,7 @@
     const temperatureValue = document.getElementById("temperature-value");
     const topkInput = document.getElementById("topk");
     const systemPromptInput = document.getElementById("system-prompt");
-    systemPromptInput.innerText = localStorage.getItem("systemPrompt");
+    systemPromptInput.innerText = localStorage.getItem("systemPrompt") === null ? "" : localStorage.getItem("systemPrompt");
     settingsToggle.addEventListener("click", () => {
       settingsContent.classList.toggle("hidden");
     });
@@ -100,6 +100,11 @@
     temperatureInput.addEventListener("input", (e) => {
       modelSettings.temperature = parseFloat(e.target.value);
       temperatureValue.textContent = e.target.value;
+      if (modelSettings.temperature != 1.0 && modelSettings.topK == 1)
+      {
+        topkInput.textContent = 10;
+        modelSettings.topK = 10;
+      }
       createSession();
     });
 

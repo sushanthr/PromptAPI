@@ -22,12 +22,12 @@
       <div id="settings-content" class="settings-content hidden">
         <div class="setting-item">
           <label for="temperature">Temperature:</label>
-          <input type="range" id="temperature" min="0" max="1" step="0.1" value="1.0">
-          <span id="temperature-value">1.0</span>
+          <input type="range" id="temperature" min="0" max="1" step="0.1" value="0">
+          <span id="temperature-value">0</span>
         </div>
         <div class="setting-item">
           <label for="topk">Top K:</label>
-          <input type="number" id="topk" min="1" max="100" value="1">
+          <input type="number" id="topk" min="1" max="100" value="10">
         </div>
         <div class="setting-item">
           <label for="system-prompt">System Prompt:</label>
@@ -56,7 +56,7 @@
   </div>
 </body>
 <script type="module">
-  let success = true;
+  let error_shown = false;
   const kFeatureFlagError = "Prompt API is not detected. Check feature flags are enabled, and that this is Canary.</li>";
   const kNoModelError = "Prompt API is available, feature flag is likely set correctly but no models are available.";
   let session_controller = null;
@@ -100,11 +100,6 @@
     temperatureInput.addEventListener("input", (e) => {
       modelSettings.temperature = parseFloat(e.target.value);
       temperatureValue.textContent = e.target.value;
-      if (modelSettings.temperature != 1.0 && modelSettings.topK == 1)
-      {
-        topkInput.textContent = 10;
-        modelSettings.topK = 10;
-      }
       createSession();
     });
 
@@ -123,9 +118,10 @@
 
   function error(str) {
     // Show the first error.
-    if (success) {
+    if (!error_shown) {
       document.getElementById("error").innerHTML = str;
-      success = false;
+      document.getElementById("okay").style.display = "none";
+      error_shown = true;
     }
     showBusy(false);
     throw new Error(str);
@@ -163,16 +159,17 @@
           error(kNoModelError);
         }
         if (result.available == 'after-download') {
+          error("Cannot create model now - " + result.available);
           // call the API to trigger download.
           showBusy(true);
-            window.ai.languageModel.create({
-              monitor(m) {
-              m.addEventListener("downloadprogress", e => {
-                document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;
-              });
-              }
+          window.ai.languageModel.create({
+            monitor(m) {
+            m.addEventListener("downloadprogress", e => {
+              document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;
             });
-            checkDownload();
+            }
+          });
+          checkDownload();
         }
         if (result.available != 'readily') {
           error("Cannot create model now - " + result.available);
@@ -183,6 +180,7 @@
           error(kNoModelError);
         }
         if (result == 'downloadable' || result == 'downloading') {
+          error("Cannot create model now - " + result.available);
           // call the API to trigger download.
           showBusy(true);
             window.ai.languageModel.create({

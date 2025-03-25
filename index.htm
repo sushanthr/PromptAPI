@@ -326,7 +326,10 @@
     sendButton.classList.add("send-state");
   }
   document.getElementById("send").onclick = onSend;
-  document.getElementById("okay").style.display = "block";
+  if (!error_shown)
+  {
+      document.getElementById("okay").style.display = "block";
+  }
   document.getElementById("input").addEventListener("keypress", e => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();

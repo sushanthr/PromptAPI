@@ -74,12 +74,21 @@
   {
     showBusy(true);
     session_controller = new AbortController();
-    session = await window.ai.languageModel.create({ 
-      temperature: modelSettings.temperature, 
-      topK: modelSettings.topK,
-      systemPrompt: (modelSettings.systemPrompt != null && modelSettings.systemPrompt.trim().length == 0) ? null : modelSettings.systemPrompt,
-      signal: session_controller.signal 
-    });
+    if (modelSettings.systemPrompt != null && modelSettings.systemPrompt.trim().length > 0)
+    {
+      session = await window.ai.languageModel.create({ 
+        temperature: modelSettings.temperature, 
+        topK: modelSettings.topK,
+        systemPrompt: modelSettings.systemPrompt,
+        signal: session_controller.signal 
+      });
+    } else {
+      session = await window.ai.languageModel.create({ 
+        temperature: modelSettings.temperature, 
+        topK: modelSettings.topK,
+        signal: session_controller.signal 
+      });
+    }
     localStorage.setItem("systemPrompt", modelSettings.systemPrompt);
     showBusy(false);
   }

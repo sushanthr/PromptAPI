@@ -135,27 +135,19 @@
     showBusy(false);
     throw new Error(str);
   }
+  
   function showBusy(busy) {
     document.getElementById("busy").style.display = busy ? "block" : "none";
   }
+  
   async function checkDownload() {
     let result = null;
-    if (window.ai.languageModel.capabilities) {
-        result = await window.ai.languageModel.capabilities();
-        if (result.available != 'readily') {
-          window.setTimeout(checkDownload, 100);
-        }
-        if (result.available == 'readily') {
-          window.location.reload();
-        }
-    } else {
-        result = await window.ai.languageModel.availability();
-        if (result != 'available') {
-          window.setTimeout(checkDownload, 100);
-        }
-        if (result == 'available') {
-          window.location.reload();
-        }
+    result = await window.ai.languageModel.availability();
+    if (result != 'available') {
+      window.setTimeout(checkDownload, 100);
+    }
+    if (result == 'available') {
+      window.location.reload();
     }
   }
 
@@ -167,9 +159,10 @@
       error(kNoModelError);
     }
     if (result == 'downloadable' || result == 'downloading') {
-      error("Cannot create model now - " + result.available);
+      error("Cannot create model now downloading - " + result.available);
       // call the API to trigger download.
       showBusy(true);
+      checkDownload();
       window.ai.languageModel.create({
         monitor(m) {
         m.addEventListener("downloadprogress", e => {
@@ -177,10 +170,9 @@
         });
         }
       });
-      checkDownload();
     }
     if (result != 'available') {
-      error("Cannot create model now - " + result);
+      error("Cannot create model now, not available - " + result);
       // Keep retrying we do seem to get into this case on browser launch.
       checkDownload();
     }

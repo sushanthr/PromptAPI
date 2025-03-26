@@ -162,48 +162,27 @@
   // Check for APi presence.
   try {
     let result = null;
-    if (window.ai.languageModel.capabilities) {
-        result = await window.ai.languageModel.capabilities();
-        if (result.available == 'no') {
-          error(kNoModelError);
+    result = await window.ai.languageModel.availability();
+    if (result == 'unavailable') {
+      error(kNoModelError);
+    }
+    if (result == 'downloadable' || result == 'downloading') {
+      error("Cannot create model now - " + result.available);
+      // call the API to trigger download.
+      showBusy(true);
+      window.ai.languageModel.create({
+        monitor(m) {
+        m.addEventListener("downloadprogress", e => {
+          document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;
+        });
         }
-        if (result.available == 'after-download') {
-          error("Cannot create model now - " + result.available);
-          // call the API to trigger download.
-          showBusy(true);
-          window.ai.languageModel.create({
-            monitor(m) {
-            m.addEventListener("downloadprogress", e => {
-              document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;
-            });
-            }
-          });
-          checkDownload();
-        }
-        if (result.available != 'readily') {
-          error("Cannot create model now - " + result.available);
-        }
-    } else {
-        result = await window.ai.languageModel.availability();
-        if (result == 'unavailable') {
-          error(kNoModelError);
-        }
-        if (result == 'downloadable' || result == 'downloading') {
-          error("Cannot create model now - " + result.available);
-          // call the API to trigger download.
-          showBusy(true);
-            window.ai.languageModel.create({
-            monitor(m) {
-            m.addEventListener("downloadprogress", e => {
-              document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;
-            });
-            }
-          });
-          checkDownload();
-        }
-        if (result != 'available') {
-          error("Cannot create model now - " + result);
-        }
+      });
+      checkDownload();
+    }
+    if (result != 'available') {
+      error("Cannot create model now - " + result);
+      // Keep retrying we do seem to get into this case on browser launch.
+      checkDownload();
     }
   }
   catch (e) {

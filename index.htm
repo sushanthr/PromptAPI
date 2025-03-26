@@ -159,10 +159,10 @@
       error(kNoModelError);
     }
     if (result == 'downloadable' || result == 'downloading') {
-      error("Cannot create model now downloading - " + result.available);
+      error("Cannot create model now downloading - " + result);
       // call the API to trigger download.
       showBusy(true);
-      checkDownload();
+      window.setTimeout(checkDownload, 1000);
       window.ai.languageModel.create({
         monitor(m) {
         m.addEventListener("downloadprogress", e => {

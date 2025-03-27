@@ -125,7 +125,7 @@
 
   initializeSettings();
 
-  function error(str) {
+  function error(str, fatal = true) {
     // Show the first error.
     if (!error_shown) {
       document.getElementById("error").innerHTML = str;
@@ -133,7 +133,10 @@
       error_shown = true;
     }
     showBusy(false);
-    throw new Error(str);
+    if (fatal)
+    {
+        throw new Error(str);
+    }
   }
   
   function showBusy(busy) {
@@ -159,7 +162,7 @@
       error(kNoModelError);
     }
     if (result == 'downloadable' || result == 'downloading') {
-      error("Cannot create model now downloading - " + result);
+      error("Cannot create model now awaiting download - " + result, false);
       // call the API to trigger download.
       showBusy(true);
       window.setTimeout(checkDownload, 1000);
@@ -172,7 +175,7 @@
       });
     }
     if (result != 'available') {
-      error("Cannot create model now, not available - " + result);
+      error("Cannot create model now, not available - " + result, false);
       // Keep retrying we do seem to get into this case on browser launch.
       checkDownload();
     }

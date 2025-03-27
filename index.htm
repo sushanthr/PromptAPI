@@ -165,7 +165,7 @@
       error("Cannot create model now awaiting download - " + result, false);
       // call the API to trigger download.
       showBusy(true);
-      window.setTimeout(checkDownload, 1000);
+      window.setTimeout(checkDownload, 100);
       window.ai.languageModel.create({
         monitor(m) {
         m.addEventListener("downloadprogress", e => {

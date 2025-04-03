@@ -63,9 +63,9 @@
   var session = null;
   let isStreaming = false;
   
-  function getAPI() {
+  function getLanguageModel() {
     // Try the new API first, then fall back to legacy
-    return window.languageModel ? window : window.ai;
+    return window.LanguageModel ? window.LanguageModel : window.ai;
   }
 
   // Add model settings
@@ -81,14 +81,14 @@
     session_controller = new AbortController();
     if (modelSettings.systemPrompt != null && modelSettings.systemPrompt.trim().length > 0)
     {
-      session = await getAPI().languageModel.create({ 
+      session = await getLanguageModel().create({ 
         temperature: modelSettings.temperature, 
         topK: modelSettings.topK,
         systemPrompt: modelSettings.systemPrompt,
         signal: session_controller.signal 
       });
     } else {
-      session = await getAPI().languageModel.create({ 
+      session = await getLanguageModel().create({ 
         temperature: modelSettings.temperature, 
         topK: modelSettings.topK,
         signal: session_controller.signal 
@@ -150,7 +150,7 @@
   
   async function checkDownload() {
     let result = null;
-    result = await getAPI().languageModel.availability();
+    result = await getLanguageModel().availability();
     if (result != 'available') {
       window.setTimeout(checkDownload, 100);
     }
@@ -162,7 +162,7 @@
   // Check for APi presence.
   try {
     let result = null;
-    result = await getAPI().languageModel.availability();
+    result = await getLanguageModel().availability();
     if (result == 'unavailable') {
       error(kNoModelError);
     }
@@ -171,7 +171,7 @@
       // call the API to trigger download.
       showBusy(true);
       window.setTimeout(checkDownload, 100);
-      getAPI().languageModel.create({
+      getLanguageModel().create({
         monitor(m) {
         m.addEventListener("downloadprogress", e => {
           document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;

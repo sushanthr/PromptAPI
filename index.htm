@@ -65,7 +65,7 @@
   
   function getLanguageModel() {
     // Try the new API first, then fall back to legacy
-    return window.LanguageModel ? window.LanguageModel : window.ai;
+    return window.LanguageModel ? window.LanguageModel : window.ai.languageModel;
   }
 
   // Add model settings

@@ -76,6 +76,10 @@
   <div id="log"></div>
 
   <script type="module">
+    function getAPI() {
+      // Try the new API first, then fall back to legacy
+      return window.languageModel ? window : window.ai;
+    }
     // --- IndexedDB functions ---
     let db;
     function initDB() {
@@ -246,7 +250,7 @@
         let answer = "";
         try {
           showBusy(true);
-          session = await window.ai.languageModel.create({ temperature: 1.0, topK: 1 });
+          session = await getAPI().languageModel.create({ temperature: 1.0, topK: 1 });
           const stream = await session.promptStreaming(promptText);
           for await (const chunk of stream) {
             answer += chunk;
@@ -329,7 +333,7 @@
         if (!window.session) {
           try {
             showBusy(true);
-            window.session = await window.ai.languageModel.create({ temperature: 1.0, topK: 1 });
+            window.session = await getAPI().languageModel.create({ temperature: 1.0, topK: 1 });
           } catch (e) {
             log("Error creating session: " + e);
           } finally {

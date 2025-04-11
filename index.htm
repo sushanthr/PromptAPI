@@ -174,7 +174,7 @@
       getLanguageModel().create({
         monitor(m) {
         m.addEventListener("downloadprogress", e => {
-          document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded/1000000)} of ${Math.round(e.total/1000000)} MB.`;
+          document.getElementById("error").innerHTML = `Downloading model ${Math.round(e.loaded * 100 / e.total)} % done.`;
         });
         }
       });

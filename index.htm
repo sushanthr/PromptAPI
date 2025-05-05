@@ -245,18 +245,17 @@
       session_controller = new AbortController();
       // Parse the schema constraint if it exists
       let constraintObj = null;
+      let options = { signal: session_controller.signal };
       if (modelSettings.schemaConstraint && modelSettings.schemaConstraint.trim()) {
         try {
           constraintObj = JSON.parse(modelSettings.schemaConstraint);
+          options.responseConstraint = constraintObj;
         } catch (parseError) {
           console.error("Failed to parse schema constraint JSON:", parseError);
           error("Invalid JSON in schema constraint", false);
         }
       }
-      stream = session.promptStreaming(input, {
-        signal: session_controller.signal,
-        responseConstraint: constraintObj
-      });
+      stream = session.promptStreaming(input, options);
     }
     catch (e) {
       error("Cannot create stream now - " + e);

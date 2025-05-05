@@ -77,7 +77,7 @@
     temperature: 1.0,
     topK: 1,
     systemPrompt: localStorage.getItem("systemPrompt"),
-    schemaConstraint: localStorage.getItem("schemaConstraint")
+    schemaConstraint: ""
   };
 
   async function createSession()
@@ -100,7 +100,6 @@
       });
     }
     localStorage.setItem("systemPrompt", modelSettings.systemPrompt);
-    localStorage.setItem("schemaConstraint", modelSettings.schemaConstraint);
     showBusy(false);
   }
 
@@ -114,7 +113,6 @@
     const systemPromptInput = document.getElementById("system-prompt");
     const schemaConstraintInput = document.getElementById("schema-constraint");
     systemPromptInput.innerText = localStorage.getItem("systemPrompt") === null ? "" : localStorage.getItem("systemPrompt");
-    schemaConstraintInput.innerText = localStorage.getItem("schemaConstraint") === null ? "" : localStorage.getItem("schemaConstraint");
     settingsToggle.addEventListener("click", () => {
       settingsContent.classList.toggle("hidden");
     });

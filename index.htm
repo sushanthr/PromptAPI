@@ -13,8 +13,8 @@
     <h1>Browser built in LLM</h1>
     <h2>Talk to the browser's prompt API, see what it knows.</h2>
     <div class="header">
-      <a link href="index.htm">Chat</a> | 
-      <a link href="Benchmark.htm">Benchmark</a> | 
+      <a link href="index.htm">Chat</a> |
+      <a link href="Benchmark.htm">Benchmark</a> |
       <a link href="quality.htm">Quality</a>
     </div>
 
@@ -32,6 +32,10 @@
         <div class="setting-item">
           <label for="system-prompt">System Prompt:</label>
           <textarea id="system-prompt" rows="3" placeholder="Enter system prompt here..."></textarea>
+        </div>
+        <div class="setting-item">
+          <label for="schema-constraint">JSON Schema:</label>
+          <textarea id="schema-constraint" rows="3" placeholder="Enter json schema for structured output here..."></textarea>
         </div>
       </div>
     </div>
@@ -62,7 +66,7 @@
   let session_controller = null;
   var session = null;
   let isStreaming = false;
-  
+
   function getLanguageModel() {
     // Try the new API first, then fall back to legacy
     return window.LanguageModel ? window.LanguageModel : window.ai.languageModel;
@@ -72,7 +76,8 @@
   let modelSettings = {
     temperature: 1.0,
     topK: 1,
-    systemPrompt: localStorage.getItem("systemPrompt")
+    systemPrompt: localStorage.getItem("systemPrompt"),
+    schemaConstraint: localStorage.getItem("schemaConstraint")
   };
 
   async function createSession()
@@ -81,20 +86,21 @@
     session_controller = new AbortController();
     if (modelSettings.systemPrompt != null && modelSettings.systemPrompt.trim().length > 0)
     {
-      session = await getLanguageModel().create({ 
-        temperature: modelSettings.temperature, 
+      session = await getLanguageModel().create({
+        temperature: modelSettings.temperature,
         topK: modelSettings.topK,
         systemPrompt: modelSettings.systemPrompt,
-        signal: session_controller.signal 
+        signal: session_controller.signal
       });
     } else {
-      session = await getLanguageModel().create({ 
-        temperature: modelSettings.temperature, 
+      session = await getLanguageModel().create({
+        temperature: modelSettings.temperature,
         topK: modelSettings.topK,
-        signal: session_controller.signal 
+        signal: session_controller.signal
       });
     }
     localStorage.setItem("systemPrompt", modelSettings.systemPrompt);
+    localStorage.setItem("schemaConstraint", modelSettings.schemaConstraint);
     showBusy(false);
   }
 
@@ -106,7 +112,9 @@
     const temperatureValue = document.getElementById("temperature-value");
     const topkInput = document.getElementById("topk");
     const systemPromptInput = document.getElementById("system-prompt");
+    const schemaConstraintInput = document.getElementById("schema-constraint");
     systemPromptInput.innerText = localStorage.getItem("systemPrompt") === null ? "" : localStorage.getItem("systemPrompt");
+    schemaConstraintInput.innerText = localStorage.getItem("schemaConstraint") === null ? "" : localStorage.getItem("schemaConstraint");
     settingsToggle.addEventListener("click", () => {
       settingsContent.classList.toggle("hidden");
     });
@@ -126,6 +134,24 @@
       modelSettings.systemPrompt = e.target.value;
       createSession();
     });
+
+    schemaConstraintInput.addEventListener("input", (e) => {
+      modelSettings.schemaConstraint = e.target.value;
+
+      // Validate JSON when input changes (optional)
+      if (e.target.value.trim()) {
+        try {
+          JSON.parse(e.target.value);
+          schemaConstraintInput.style.border = "1px solid green";
+        } catch (parseError) {
+          schemaConstraintInput.style.border = "1px solid red";
+        }
+      } else {
+        schemaConstraintInput.style.removeProperty("border");
+      }
+
+      createSession();
+    });
   }
 
   initializeSettings();
@@ -143,11 +169,11 @@
         throw new Error(str);
     }
   }
-  
+
   function showBusy(busy) {
     document.getElementById("busy").style.display = busy ? "block" : "none";
   }
-  
+
   async function checkDownload() {
     let result = null;
     result = await getLanguageModel().availability();
@@ -219,7 +245,20 @@
     try {
       showBusy(true);
       session_controller = new AbortController();
-      stream = session.promptStreaming(input, { signal: session_controller.signal });
+      // Parse the schema constraint if it exists
+      let constraintObj = null;
+      if (modelSettings.schemaConstraint && modelSettings.schemaConstraint.trim()) {
+        try {
+          constraintObj = JSON.parse(modelSettings.schemaConstraint);
+        } catch (parseError) {
+          console.error("Failed to parse schema constraint JSON:", parseError);
+          error("Invalid JSON in schema constraint", false);
+        }
+      }
+      stream = session.promptStreaming(input, {
+        signal: session_controller.signal,
+        responseConstraint: constraintObj
+      });
     }
     catch (e) {
       error("Cannot create stream now - " + e);
@@ -259,7 +298,7 @@
 
   async function onSend() {
     const sendButton = document.getElementById("send");
-    
+
     if (isStreaming) {
       // Abort current stream
       session_controller.abort();
@@ -269,10 +308,10 @@
       sendButton.classList.add("send-state");
       return;
     }
-  
+
     const inputText = document.getElementById("input").value;
     if (!inputText.trim()) return; // Don't send empty messages
-  
+
     // Create UI elements
     let input = document.createElement("p");
     input.setAttribute("class", "from-me");
@@ -283,19 +322,19 @@
     document.getElementsByClassName("imessage")[0].appendChild(reply);
     update_element = reply;
     reply.innerText = "...";
-  
+
     // Reset metrics
     start_time = Date.now();
     token_count = 0;
     post_prefill_time = null;
     post_prefill_c = null;
     post_prefill_t = null;
-  
+
     // Create new session if needed
     if (!session) {
       await createSession();
     }
-  
+
     isStreaming = true;
     sendButton.classList.remove("send-state");
     sendButton.classList.add("abort-state");

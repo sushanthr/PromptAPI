@@ -35,7 +35,17 @@
         </div>
         <div class="setting-item">
           <label for="schema-constraint">JSON Schema:</label>
-          <textarea id="schema-constraint" rows="3" placeholder="Enter json schema for structured output here..."></textarea>
+          <div class="schema-input-container">
+            <textarea id="schema-constraint" rows="3" placeholder="Enter json schema for structured output here..."></textarea>
+            <div class="schema-samples">
+              <button id="schema-samples-btn">Sample Schemas ▼</button>
+              <div id="schema-dropdown" class="schema-dropdown hidden">
+                <div class="schema-option" data-schema-id="rating">Rating (0-5)</div>
+                <div class="schema-option" data-schema-id="answer">Answer with Explanation</div>
+                <div class="schema-option" data-schema-id="clear">Clear Schema</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -89,7 +99,9 @@
       session = await getLanguageModel().create({
         temperature: modelSettings.temperature,
         topK: modelSettings.topK,
-        systemPrompt: modelSettings.systemPrompt,
+        initialPrompts: [
+          { role: 'system', content: modelSettings.systemPrompt },
+        ],
         signal: session_controller.signal
       });
     } else {
@@ -149,6 +161,75 @@
       }
 
       createSession();
+    });
+
+    const schemaSamplesBtn = document.getElementById("schema-samples-btn");
+    const schemaDropdown = document.getElementById("schema-dropdown");
+    const schemaOptions = document.querySelectorAll(".schema-option");
+
+    // Sample schemas
+    const sampleSchemas = {
+      rating: {
+        type: "object",
+        required: ["rating"],
+        additionalProperties: false,
+        properties: {
+          rating: {
+            type: "number",
+            minimum: 0,
+            maximum: 5
+          }
+        }
+      },
+      answer: {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        type: "object",
+        properties: {
+          answer: {
+            type: "integer"
+          },
+          explanation: {
+            type: "string",
+            description: "Explanation of the answer"
+          }
+        },
+        required: ["answer", "explanation"],
+        additionalProperties: false
+      }
+    };
+
+    // Toggle dropdown visibility
+    schemaSamplesBtn.addEventListener("click", () => {
+      schemaDropdown.classList.toggle("hidden");
+    });
+
+    // Handle schema selection
+    schemaOptions.forEach(option => {
+      option.addEventListener("click", () => {
+        const schemaId = option.getAttribute("data-schema-id");
+        
+        if (schemaId === "clear") {
+          schemaConstraintInput.value = "";
+          modelSettings.schemaConstraint = "";
+        } else if (sampleSchemas[schemaId]) {
+          const formattedSchema = JSON.stringify(sampleSchemas[schemaId], null, 2);
+          schemaConstraintInput.value = formattedSchema;
+          modelSettings.schemaConstraint = formattedSchema;
+          
+          // Validate and show success indicator
+          schemaConstraintInput.style.border = "1px solid green";
+        }
+        
+        schemaDropdown.classList.add("hidden");
+        createSession();
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!schemaSamplesBtn.contains(e.target) && !schemaDropdown.contains(e.target)) {
+        schemaDropdown.classList.add("hidden");
+      }
     });
   }
 

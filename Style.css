@@ -288,3 +288,49 @@ h2 {
 .hidden {
   display: none;
 }
+
+.schema-input-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.schema-samples {
+  position: relative;
+  margin-top: 5px;
+}
+
+#schema-samples-btn {
+  padding: 5px 10px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#schema-samples-btn:hover {
+  background: #e0e0e0;
+}
+
+.schema-dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+
+.schema-dropdown.hidden {
+  display: none;
+}
+
+.schema-option {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.schema-option:hover {
+  background: #f0f0f0;
+}

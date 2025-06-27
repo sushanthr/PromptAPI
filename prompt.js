@@ -280,10 +280,10 @@ async function sendMessage(input) {
             // Calculate metrics
             if (tokenCount >= 2) {
                 if (postPrefillTime) {
-                    const seconds = Math.floor((Date.now() - postPrefillTime) / 1000);
+                    const seconds = ((Date.now() - postPrefillTime) / 1000);
                     if (seconds > 0) {
-                        currentCps = Math.round((updateElement.innerText.length - postPrefillC) / seconds);
-                        currentTps = Math.round((tokenCount - postPrefillT) / seconds);
+                        currentCps = ((updateElement.innerText.length - postPrefillC) / seconds);
+                        currentTps = ((tokenCount - postPrefillT) / seconds);
                     }
                 } else {
                     postPrefillTime = Date.now();
@@ -297,8 +297,8 @@ async function sendMessage(input) {
                 document.getElementById("start-latency").textContent = initialDelay;
             }
             
-            document.getElementById("chars-per-sec").textContent = currentCps;
-            document.getElementById("tokens-per-sec").textContent = currentTps;
+            document.getElementById("chars-per-sec").textContent = Math.round(currentCps);
+            document.getElementById("tokens-per-sec").textContent = Math.round(currentTps);
             
             chatOutput.scrollTop = chatOutput.scrollHeight;
         }

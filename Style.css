@@ -251,35 +251,86 @@ body {
 .overflow-x-hidden {
     overflow-x: hidden;
 }
-/* Interactive utilities */
-.cursor-pointer {
-    cursor: pointer;
+
+/* Dropdown styles */
+.z-10 {
+    z-index: 10;
 }
-.appearance-none {
-    appearance: none;
+.absolute {
+    position: absolute;
 }
-.accent-blue-500 {
-    accent-color: #3b82f6;
+.relative {
+    position: relative;
 }
-.hover\:text-blue-400:hover {
-    color: #60a5fa;
+.top-full {
+    top: 100%;
 }
-a:link {
-    color: #cdd6f4;
-    text-decoration: none;
+.left-0 {
+    left: 0;
 }
-a:visited {
-    color: #cdd6f4;
-    text-decoration: none;
+.hidden {
+    display: none;
 }
-.transition-colors {
-    transition-property: color, background-color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+.bg-gray-800 {
+    background-color: #1f2937;
+}
+.border-gray-600 {
+    border-color: #4b5563;
+}
+.rounded {
+    border-radius: 0.25rem;
+}
+.hover\:bg-gray-700:hover {
+    background-color: #374151;
 }
 
-.h-tall {
-    height: 200px; /* Example height for tall elements */
+/* Schema option styles */
+.schema-option {
+    transition: background-color 0.15s ease-in-out;
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+/* JSON validation borders */
+.input-field[style*="border: 1px solid green"] {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 1px #22c55e;
+}
+.input-field[style*="border: 1px solid red"] {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 1px #ef4444;
+}
+
+/* Material Icons animations */
+.material-icons {
+    transition: transform 0.2s ease-in-out;
+}
+.text-yellow-400 {
+    color: #fbbf24;
+}
+
+/* Chat message styling improvements */
+.chat-message p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Button loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Dropdown positioning fix */
+.config-panel .relative {
+    position: relative;
+}
+.config-panel .absolute {
+    position: absolute;
+    z-index: 20;
+    min-width: 100%;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Responsive utilities */

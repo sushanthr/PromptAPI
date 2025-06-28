@@ -155,26 +155,48 @@ async function initializeRewriter() {
 
 function getSummarizerConfig() {
     return {
-        type: document.getElementById("sum-type").value,
-        format: document.getElementById("sum-format").value,
-        length: document.getElementById("sum-length").value
+        type: getSelectedButtonValue('sum-type'),
+        format: getSelectedButtonValue('sum-format'),
+        length: getSelectedButtonValue('sum-length')
     };
 }
 
 function getWriterConfig() {
     return {
-        tone: document.getElementById("writer-tone").value,
-        format: document.getElementById("writer-format").value,
-        length: document.getElementById("writer-length").value
+        tone: getSelectedButtonValue('writer-tone'),
+        format: getSelectedButtonValue('writer-format'),
+        length: getSelectedButtonValue('writer-length')
     };
 }
 
 function getRewriterConfig() {
     return {
-        tone: document.getElementById("rewriter-tone").value,
-        format: document.getElementById("rewriter-format").value,
-        length: document.getElementById("rewriter-length").value
+        tone: getSelectedButtonValue('rewriter-tone'),
+        format: getSelectedButtonValue('rewriter-format'),
+        length: getSelectedButtonValue('rewriter-length')
     };
+}
+
+function getSelectedButtonValue(groupName) {
+    const group = document.querySelector(`[data-group="${groupName}"]`);
+    const activeButton = group.querySelector('.btn-option.active');
+    return activeButton ? activeButton.dataset.value : null;
+}
+
+function setActiveButton(groupName, value) {
+    const group = document.querySelector(`[data-group="${groupName}"]`);
+    if (!group) return;
+    
+    // Remove active class from all buttons in group
+    group.querySelectorAll('.btn-option').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Add active class to selected button
+    const targetButton = group.querySelector(`[data-value="${value}"]`);
+    if (targetButton) {
+        targetButton.classList.add('active');
+    }
 }
 
 function switchTaskConfig() {
@@ -403,6 +425,21 @@ async function initialize() {
     }
 }
 
+function initializeButtonGroups() {
+    // Add click listeners to all button options
+    document.querySelectorAll('.btn-option').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const button = e.target;
+            const group = button.closest('[data-group]');
+            const groupName = group.dataset.group;
+            const value = button.dataset.value;
+            
+            // Set this button as active
+            setActiveButton(groupName, value);
+        });
+    });
+}
+
 window.addEventListener("load", () => {
     // Initialize UI
     switchTaskConfig();
@@ -414,7 +451,11 @@ window.addEventListener("load", () => {
     document.getElementById("clear-btn").addEventListener("click", clearContent);
     document.getElementById("download-btn").addEventListener("click", downloadModels);
     
+    // Button group event listeners
+    initializeButtonGroups();
+    
     // Update input character count
+    document.getElementById("input-chars").textContent = document.getElementById("input-text").value.length;
     document.getElementById("input-text").addEventListener("input", (e) => {
         document.getElementById("input-chars").textContent = e.target.value.length;
     });

@@ -164,6 +164,44 @@ label {
     display: none;
 }
 
+/* Button Group Components */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.btn-option {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    text-align: center;
+    min-width: fit-content;
+}
+
+.btn-option:hover {
+    background-color: var(--color-border);
+    border-color: var(--color-accent-blue);
+}
+
+.btn-option.active {
+    background-color: var(--color-accent-blue);
+    border-color: var(--color-accent-blue);
+    color: white;
+}
+
+.btn-option.active:hover {
+    background-color: var(--color-accent-blue-hover);
+    border-color: var(--color-accent-blue-hover);
+}
+
 /* Schema Components */
 .schema-option {
     transition: background-color 0.15s ease-in-out;

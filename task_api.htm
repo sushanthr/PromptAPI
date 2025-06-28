@@ -113,28 +113,28 @@ In summary, the moon landing was a transformative event that advanced technology
     <!-- Summarizer options -->
     <div id="summarizer-config" class="task-config">
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-type">Type</label>
-            <select class="input-field w-90 text-sm" id="sum-type">
-                <option value="key-points">Key Points</option>
-                <option value="tldr">TL;DR</option>
-                <option value="teaser">Teaser</option>
-                <option value="headline">Headline</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Type</label>
+            <div class="button-group" data-group="sum-type">
+                <button class="btn-option active" data-value="key-points">Key Points</button>
+                <button class="btn-option" data-value="tldr">TL;DR</button>
+                <button class="btn-option" data-value="teaser">Teaser</button>
+                <button class="btn-option" data-value="headline">Headline</button>
+            </div>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-format">Format</label>
-            <select class="input-field w-90 text-sm" id="sum-format">
-                <option value="markdown">Markdown</option>
-                <option value="plain-text">Plain Text</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Format</label>
+            <div class="button-group" data-group="sum-format">
+                <button class="btn-option active" data-value="markdown">Markdown</button>
+                <button class="btn-option" data-value="plain-text">Plain Text</button>
+            </div>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-length">Length</label>
-            <select class="input-field w-90 text-sm" id="sum-length">
-                <option value="short">Short</option>
-                <option value="medium">Medium</option>
-                <option value="long">Long</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Length</label>
+            <div class="button-group" data-group="sum-length">
+                <button class="btn-option active" data-value="short">Short</button>
+                <button class="btn-option" data-value="medium">Medium</button>
+                <button class="btn-option" data-value="long">Long</button>
+            </div>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-context">Context</label>
@@ -145,27 +145,27 @@ In summary, the moon landing was a transformative event that advanced technology
     <!-- Writer options -->
     <div id="writer-config" class="task-config hidden">
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-tone">Tone</label>
-            <select class="input-field w-90 text-sm" id="writer-tone">
-                <option value="neutral">Neutral</option>
-                <option value="formal">Formal</option>
-                <option value="casual">Casual</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Tone</label>
+            <div class="button-group" data-group="writer-tone">
+                <button class="btn-option active" data-value="neutral">Neutral</button>
+                <button class="btn-option" data-value="formal">Formal</button>
+                <button class="btn-option" data-value="casual">Casual</button>
+            </div>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-format">Format</label>
-            <select class="input-field w-90 text-sm" id="writer-format">
-                <option value="markdown">Markdown</option>
-                <option value="plain-text">Plain Text</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Format</label>
+            <div class="button-group" data-group="writer-format">
+                <button class="btn-option active" data-value="markdown">Markdown</button>
+                <button class="btn-option" data-value="plain-text">Plain Text</button>
+            </div>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-length">Length</label>
-            <select class="input-field w-90 text-sm" id="writer-length">
-                <option value="short">Short</option>
-                <option value="medium">Medium</option>
-                <option value="long">Long</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Length</label>
+            <div class="button-group" data-group="writer-length">
+                <button class="btn-option active" data-value="short">Short</button>
+                <button class="btn-option" data-value="medium">Medium</button>
+                <button class="btn-option" data-value="long">Long</button>
+            </div>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-context">Context</label>
@@ -176,28 +176,28 @@ In summary, the moon landing was a transformative event that advanced technology
     <!-- Rewriter options -->
     <div id="rewriter-config" class="task-config hidden">
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-tone">Tone</label>
-            <select class="input-field w-90 text-sm" id="rewriter-tone">
-                <option value="as-is">As-is</option>
-                <option value="more-formal">More Formal</option>
-                <option value="more-casual">More Casual</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Tone</label>
+            <div class="button-group" data-group="rewriter-tone">
+                <button class="btn-option active" data-value="as-is">As-is</button>
+                <button class="btn-option" data-value="more-formal">More Formal</button>
+                <button class="btn-option" data-value="more-casual">More Casual</button>
+            </div>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-format">Format</label>
-            <select class="input-field w-90 text-sm" id="rewriter-format">
-                <option value="as-is">As-is</option>
-                <option value="markdown">Markdown</option>
-                <option value="plain-text">Plain Text</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Format</label>
+            <div class="button-group" data-group="rewriter-format">
+                <button class="btn-option active" data-value="as-is">As-is</button>
+                <button class="btn-option" data-value="markdown">Markdown</button>
+                <button class="btn-option" data-value="plain-text">Plain Text</button>
+            </div>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-length">Length</label>
-            <select class="input-field w-90 text-sm" id="rewriter-length">
-                <option value="as-is">As-is</option>
-                <option value="shorter">Shorter</option>
-                <option value="longer">Longer</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Length</label>
+            <div class="button-group" data-group="rewriter-length">
+                <button class="btn-option active" data-value="as-is">As-is</button>
+                <button class="btn-option" data-value="shorter">Shorter</button>
+                <button class="btn-option" data-value="longer">Longer</button>
+            </div>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-context">Context</label>

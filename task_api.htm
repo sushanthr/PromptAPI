@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task API - Prompt API</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="task_api.js"></script>
+</head>
+<body class="flex flex-col h-screen">
+<header class="terminal-header p-4 flex justify-between items-center">
+<div class="flex items-center space-x-4">
+    <div class="flex items-center space-x-2">
+        <span id="model-icon" class="material-icons text-green-400">check_circle</span>
+        <span id="model-status" class="text-sm">Models: Available</span>
+        <button id="download-btn" class="btn btn-secondary text-xs hidden">Download Models</button>
+    </div>
+</div>
+<nav class="flex items-center space-x-6 text-sm">
+<a class="hover:text-blue-400 transition-colors" href="index.htm">Chat</a>
+<a class="hover:text-blue-400 transition-colors" href="speed.htm">Speed</a>
+<a class="hover:text-blue-400 transition-colors" href="quality.htm">Quality</a>
+<span class="text-blue-400">Tasks</span>
+</nav>
+</header>
+<main class="flex-grow p-6 flex flex-col overflow-y-auto overflow-x-hidden bg-gray-900">
+<div class="text-center mb-8">
+<div class="ascii-art text-3xl md:text-5xl" id="title-ascii">
+___            ____ __ 
+ | _. _|   /\ |_)| (_  
+ |(_|_>|< /--\| _|___) 
+</div>
+<p class="mt-2 text-gray-400 text-sm">Test browser built-in Task APIs: Summarizer, Writer, and Rewriter.</p>
+</div>
+
+<div class="flex-grow flex space-x-4">
+<!-- Main content area -->
+<div class="flex-grow flex flex-col space-y-4">
+    <!-- Task selector -->
+    <div class="bg-gray-850 rounded-lg border border-gray-700 p-4">
+        <div class="flex items-center space-x-4 mb-4">
+            <label class="text-sm font-medium text-gray-400">Select Task:</label>
+            <select id="task-selector" class="input-field text-sm">
+                <option value="summarizer">Summarizer</option>
+                <option value="writer">Writer</option>
+                <option value="rewriter">Rewriter</option>
+            </select>
+            <div class="flex items-center space-x-2 ml-4">
+                <span id="task-model-icon" class="material-icons text-green-400">check_circle</span>
+                <span id="task-model-status" class="text-sm">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input/Output area -->
+    <div class="flex-grow bg-gray-850 rounded-lg border border-gray-700 flex flex-col">
+        <div class="p-4 border-b border-gray-700">
+            <label class="block text-sm font-medium text-gray-400 mb-2" for="input-text">Input Text</label>
+            <textarea class="input-field w-full text-sm" id="input-text" placeholder="Enter your text here..." rows="6" style="height: 300px;">
+The moon landing on July 20, 1969, was a monumental event that left an indelible mark on human history. When Neil Armstrong took his first steps on the lunar surface and uttered the famous words, "That's one small step for man, one giant leap for mankind," it symbolized a pinnacle of human achievement and ingenuity.
+
+Technological Advancements
+The Apollo program, which culminated in the moon landing, spurred significant technological advancements. The development of new materials, computer systems, and life support technologies not only made space travel possible but also had far-reaching applications on Earth. Innovations in these areas led to advancements in fields such as computing, telecommunications, and materials science .
+
+
+Inspiration and Unity
+The moon landing served as a powerful source of inspiration. It demonstrated what humanity could achieve when working towards a common goal. The event was broadcasted globally, with an estimated 600 million people watching live. This shared experience fostered a sense of global unity, even if only momentarily, as people around the world marveled at the accomplishment .
+
+
+Scientific and Cultural Impact
+Scientifically, the moon landing provided invaluable data about the moon's composition and environment, which has informed subsequent space missions and research. Culturally, it has been a recurring theme in literature, film, and art, symbolizing the boundless possibilities of human exploration and the spirit of adventure .
+
+
+Political and Social Implications
+The moon landing also had significant political implications. It was a key moment in the Cold War, showcasing the United States' technological and ideological superiority over the Soviet Union. This achievement bolstered national pride and demonstrated the potential of peaceful competition in advancing human knowledge and capability .
+
+
+Controversies and Criticisms
+Despite its many positive impacts, the moon landing was not without its critics. Some viewed the enormous expenditure on space exploration as wasteful, arguing that the funds could have been better spent addressing social issues on Earth. Additionally, conspiracy theories about the moon landing being faked have persisted, though they have been thoroughly debunked .
+
+In summary, the moon landing was a transformative event that advanced technology, inspired generations, and united people across the globe. It remains a testament to human curiosity, determination, and the desire to explore the unknown. 
+            </textarea>
+            <div class="mt-2 flex items-center space-x-2">
+                <button class="btn btn-primary flex items-center" id="process-btn">
+                    <span class="material-icons text-lg mr-1" id="process-icon">play_arrow</span>
+                    <span id="process-text">Process</span>
+                </button>
+                <button class="btn btn-secondary" id="clear-btn">Clear</button>
+                <div class="flex items-center space-x-2 ml-4">
+                    <label class="text-xs text-gray-500">
+                        <input type="checkbox" id="streaming-checkbox" checked class="mr-1">
+                        Use Streaming
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex-grow p-4">
+            <label class="block text-sm font-medium text-gray-400 mb-2">Output</label>
+            <div class="bg-gray-900 border border-gray-700 rounded p-4 h-80 overflow-y-auto" id="output-content">
+                <p class="text-gray-500 text-sm">Output will appear here...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration panel -->
+<div class="w-1-3 max-w-sm config-panel space-y-4 overflow-y-auto border border-gray-700">
+    <h3 class="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2">Task Configuration</h3>
+    
+    <!-- Summarizer options -->
+    <div id="summarizer-config" class="task-config">
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-type">Type</label>
+            <select class="input-field w-90 text-sm" id="sum-type">
+                <option value="key-points">Key Points</option>
+                <option value="tldr">TL;DR</option>
+                <option value="teaser">Teaser</option>
+                <option value="headline">Headline</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-format">Format</label>
+            <select class="input-field w-90 text-sm" id="sum-format">
+                <option value="markdown">Markdown</option>
+                <option value="plain-text">Plain Text</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-length">Length</label>
+            <select class="input-field w-90 text-sm" id="sum-length">
+                <option value="short">Short</option>
+                <option value="medium">Medium</option>
+                <option value="long">Long</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="sum-context">Context</label>
+            <textarea class="input-field w-90 text-sm" id="sum-context" placeholder="Additional context..." rows="2"></textarea>
+        </div>
+    </div>
+
+    <!-- Writer options -->
+    <div id="writer-config" class="task-config hidden">
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-tone">Tone</label>
+            <select class="input-field w-90 text-sm" id="writer-tone">
+                <option value="neutral">Neutral</option>
+                <option value="formal">Formal</option>
+                <option value="casual">Casual</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-format">Format</label>
+            <select class="input-field w-90 text-sm" id="writer-format">
+                <option value="markdown">Markdown</option>
+                <option value="plain-text">Plain Text</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-length">Length</label>
+            <select class="input-field w-90 text-sm" id="writer-length">
+                <option value="short">Short</option>
+                <option value="medium">Medium</option>
+                <option value="long">Long</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="writer-context">Context</label>
+            <textarea class="input-field w-90 text-sm" id="writer-context" placeholder="Additional context..." rows="2"></textarea>
+        </div>
+    </div>
+
+    <!-- Rewriter options -->
+    <div id="rewriter-config" class="task-config hidden">
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-tone">Tone</label>
+            <select class="input-field w-90 text-sm" id="rewriter-tone">
+                <option value="as-is">As-is</option>
+                <option value="more-formal">More Formal</option>
+                <option value="more-casual">More Casual</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-format">Format</label>
+            <select class="input-field w-90 text-sm" id="rewriter-format">
+                <option value="as-is">As-is</option>
+                <option value="markdown">Markdown</option>
+                <option value="plain-text">Plain Text</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-length">Length</label>
+            <select class="input-field w-90 text-sm" id="rewriter-length">
+                <option value="as-is">As-is</option>
+                <option value="shorter">Shorter</option>
+                <option value="longer">Longer</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1" for="rewriter-context">Context</label>
+            <textarea class="input-field w-90 text-sm" id="rewriter-context" placeholder="Additional context..." rows="2"></textarea>
+        </div>
+    </div>
+</div>
+</div>
+</main>
+<footer class="terminal-footer p-3 text-xs text-gray-400 flex justify-center items-center space-x-6">
+    <span>Processing Time (ms): <span id="processing-time">0</span></span>
+    <span>Input Characters: <span id="input-chars">0</span></span>
+    <span>Output Characters: <span id="output-chars">0</span></span>
+</footer>
+</body>
+</html>

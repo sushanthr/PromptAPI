@@ -1,4 +1,3 @@
-
 /* ==========================================================================
    Base Styles
    ========================================================================== */
@@ -31,7 +30,9 @@ a:visited {
     color: var(--color-text-primary);
     text-decoration: none;
 }
-
+label {
+    margin-bottom: 10px;
+}
 /* ==========================================================================
    Component Styles
    ========================================================================== */
@@ -154,6 +155,15 @@ a:visited {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+/* Task Configuration Components */
+.task-config {
+    transition: opacity 0.15s ease-in-out;
+}
+
+.task-config.hidden {
+    display: none;
+}
+
 /* Schema Components */
 .schema-option {
     transition: background-color 0.15s ease-in-out;
@@ -215,6 +225,9 @@ a:visited {
 
 /* Sizing */
 .h-screen { height: 100vh; }
+.h-full { height: 100%; }
+.h-80 { height: 80%; }
+.h-tall { height: 8rem; }
 .h-2 { height: 0.5rem; }
 .w-full { width: 100%; }
 .w-90 { width: 90%; }

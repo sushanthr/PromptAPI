@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prompt API - Speed Benchmark</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
+<script src="speed.js"></script>
+</head>
+<body class="flex flex-col h-screen">
+<header class="terminal-header p-4 flex justify-between items-center">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+        <span id="model-icon" class="material-icons text-green-400">check_circle</span>
+        <span id="model-status" class="text-sm">Model: Available</span>
+        <button id="download-btn" class="btn btn-secondary text-xs hidden">Download Model</button>
+</div>
+</div>
+<nav class="flex items-center space-x-6 text-sm">
+<a class="hover:text-blue-400 transition-colors" href="index.htm">Chat</a>
+<a class="hover:text-blue-400 transition-colors" href="speed.htm">Speed</a>
+<a class="hover:text-blue-400 transition-colors" href="quality.htm">Quality</a>
+</nav>
+</header>
+<main class="flex-grow p-6 flex flex-col overflow-y-auto overflow-x-hidden bg-gray-900">
+    <body>
+        <div class="container">
+                <div class="flex space-x-4 mb-6">
+                    <button id="bench" onclick="MeasureAll()" class="btn btn-primary">Measure</button>
+                    <button id="save" onclick="saveResults()" class="btn btn-secondary"><span class="material-icons  text-green-400">copy_all</span></button>
+                </div>
+                <br>
+                <div class="bg-gray-850 rounded-lg border border-gray-700 p-6">
+                    <table class="w-full text-sm">
+                        <tr class="border-b border-gray-700">
+                            <td class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-200">Time to first token</h3>
+                                <p class="text-gray-400 text-sm mt-2">
+                                    With a prompt "Hi" (9 tokens). Measures the time for the first token response.<br>
+                                    After a fresh browser start, this measures time to load a model.<br>
+                                    On a warm start, this is the inference engine session creation time.
+                                </p>
+                            </td>
+                            <td class="p-4 text-right">
+                                <span id="time-to-first-token" class="text-xl font-mono text-blue-400">0</span> <span class="text-gray-400">ms</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-200">Time for prefill 1K tokens <span onclick="RunPrefillTest()" class="material-icons replay">replay</span></h3>
+                                <p class="text-gray-400 text-sm mt-2">
+                                    Measures time for the inference engine to process 1K tokens and produce the first response token.
+                                </p>
+                                <table class="text-xs mt-4 bg-gray-700 rounded">
+                                    <tr class="border-b border-gray-600">
+                                        <th class="p-2 w-100">Run</th><td class="p-2">1</td><td class="p-2">2</td><td class="p-2">3</td><td class="p-2">4</td><td class="p-2">5</td></tr>
+                                    <tr><th class="p-2 w-100">ms</th><td class="p-2" id="1kt1">0</td><td class="p-2" id="1kt2">0</td><td class="p-2" id="1kt3">0</td><td class="p-2" id="1kt4">0</td><td class="p-2" id="1kt5">0</td></tr>
+                                </table>
+                            </td>
+                            <td class="p-4 text-right">
+                                <span id="time-to-prefill-1k" class="text-xl font-mono text-blue-400">0</span> <span class="text-gray-400">ms</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-200">Token generation performance <span onclick="RunTPStest()" class="material-icons replay">replay</span></h3>
+                                <p class="text-gray-400 text-sm mt-2">
+                                    Measures tokens per second for the generation phase of the inference engine.<br>
+                                    Measures time for the tokens 10 to 50 and tokens 50-100 as generation speed can vary with response length.
+                                </p>
+                                <table class="text-xs mt-4 bg-gray-700 rounded">
+                                    <tr class="border-b border-gray-600">
+                                        <th class="p-2 w-100">Run</th>
+                                        <td class="p-2">1</td>
+                                        <td class="p-2">2</td>
+                                        <td class="p-2">3</td>
+                                        <td class="p-2">4</td>
+                                        <td class="p-2">5</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-600">
+                                        <th class="p-2 w-100">Token 10-50 tps</th>
+                                        <td class="p-2" id="tps1-1">0</td>
+                                        <td class="p-2" id="tps2-1">0</td>
+                                        <td class="p-2" id="tps3-1">0</td>
+                                        <td class="p-2" id="tps4-1">0</td>
+                                        <td class="p-2" id="tps5-1">0</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="p-2 w-100">Token 50-100 tps</th>
+                                        <td class="p-2" id="tps1-2">0</td>
+                                        <td class="p-2" id="tps2-2">0</td>
+                                        <td class="p-2" id="tps3-2">0</td>
+                                        <td class="p-2" id="tps4-2">0</td>
+                                        <td class="p-2" id="tps5-2">0</td>
+                                    </tr>
+                                </table>
+                                <div id="scratch-tps" class="mt-4 h-2 p-2 bg-gray-800 rounded text-xs">
+                                    &nbsp;
+                                </div>
+                            </td>
+                            <td class="p-4 text-right">
+                                <span id="tps-result" class="text-xl font-mono text-blue-400">0</span> <span class="text-gray-400">tps</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <footer class="terminal-footer p-3 text-xs text-gray-400 flex justify-center items-center space-x-6">
+            <span>Benchmark Status: <span id="benchmark-status">Ready</span></span>
+            <div id="progress-container" class="hidden flex items-center space-x-2 w-90px">
+                <div class="w-90px h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-2 bg-blue-400 rounded-full animate-pulse transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </footer>
+    </body>
+</html>

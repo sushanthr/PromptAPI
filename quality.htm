@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prompt API - Quality Benchmark</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
+<link href="quality.css" rel="stylesheet"/>
+</head>
+<body class="flex flex-col h-screen">
+<header class="terminal-header p-4 flex justify-between items-center">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+        <span id="model-icon" class="material-icons text-green-400">check_circle</span>
+        <span id="model-status" class="text-sm">Model: Available</span>
+        <button id="download-btn" class="btn btn-secondary text-xs hidden">Download Model</button>
+</div>
+</div>
+<nav class="flex items-center space-x-6 text-sm">
+<a class="hover:text-blue-400 transition-colors" href="index.htm">Chat</a>
+<a class="hover:text-blue-400 transition-colors" href="speed.htm">Speed</a>
+<span class="text-blue-400">Quality</span>
+</nav>
+</header>
+<main class="flex-grow p-6 flex flex-col overflow-y-auto overflow-x-hidden bg-gray-900">
+    <div class="container"> 
+        <h1 class="text-2xl font-bold text-gray-200 mb-6">Quality Benchmark</h1>
+        <p class="text-gray-400 mb-6">
+            This test runs through a tiny subset of MMLU dataset, prompts the language model with each question, and tallies the number of correct single-letter answers.
+        </p>
+        
+        <div class="flex space-x-4 mb-6">
+            <button id="startTest" class="btn btn-primary">
+                <span class="material-icons text-sm mr-2">play_arrow</span>Start Test
+            </button>
+            <button id="stopTest" class="btn btn-secondary" disabled>
+                <span class="material-icons text-sm mr-2">stop</span>Stop Test
+            </button>
+            <button id="clearResults" class="btn btn-secondary">
+                <span class="material-icons text-sm mr-2">clear</span>Clear Results
+            </button>
+        </div>
+
+        <div class="bg-gray-850 rounded-lg border border-gray-700 p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div class="text-center">
+                    <div class="text-2xl font-mono text-blue-400" id="correctCount">0</div>
+                    <div class="text-gray-400 text-sm">Correct Answers</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-mono text-blue-400" id="questionCount">0</div>
+                    <div class="text-gray-400 text-sm">Total Questions</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-mono text-blue-400" id="scorePercent">0</div>
+                    <div class="text-gray-400 text-sm">Score (%)</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-mono text-orange-400" id="nonLetterCount">0</div>
+                    <div class="text-gray-400 text-sm">Invalid Responses</div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="flex justify-between text-sm text-gray-400 mb-2">
+                    <span>Progress</span>
+                    <span><span id="currentCount">0</span> questions completed</span>
+                </div>
+                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-2 bg-blue-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-850 rounded-lg border border-gray-700 p-4">
+            <h3 class="text-lg font-semibold text-gray-200 mb-3">Test Log</h3>
+            <div id="log" class="h-64 overflow-y-auto bg-gray-800 rounded p-3 text-sm text-gray-300 font-mono"></div>
+        </div>
+    </div>
+</main>
+<footer class="terminal-footer p-3 text-xs text-gray-400 flex justify-center items-center space-x-6">
+    <span>Test Status: <span id="test-status">Ready</span></span>
+    <div id="progress-container" class="hidden flex items-center space-x-2 w-90px">
+        <div class="w-90px h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div id="footer-progress-bar" class="h-2 bg-blue-400 rounded-full animate-pulse transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </div>
+</footer>
+
+<script type="module">
+    function getLanguageModel() {
+        // Try the new API first, then fall back to legacy
+        return window.LanguageModel ? window.LanguageModel : window.ai.languageModel;
+    }
+
+    // --- IndexedDB functions ---
+    let db;
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("LLMQualityTestDB", 1);
+        request.onupgradeneeded = (event) => {
+          db = event.target.result;
+          if (!db.objectStoreNames.contains("progress")) {
+            const store = db.createObjectStore("progress", { keyPath: "id" });
+            store.put({ id: "progress", currentQuestion: 0, correct: 0, nonLetter: 0 });
+          }
+          if (!db.objectStoreNames.contains("logs")) {
+            db.createObjectStore("logs", { autoIncrement: true });
+          }
+        };
+        request.onsuccess = (event) => {
+          db = event.target.result;
+          resolve();
+        };
+        request.onerror = (event) => {
+          reject(event.target.error);
+        };
+      });
+    }
+
+    function getProgress() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("progress", "readonly");
+        const store = tx.objectStore("progress");
+        const request = store.get("progress");
+        request.onsuccess = () => resolve(request.result || { id: "progress", currentQuestion: 0, correct: 0, nonLetter: 0 });
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function setProgress(progress) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("progress", "readwrite");
+        const store = tx.objectStore("progress");
+        const request = store.put(progress);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function addLogToDB(message) {
+      const tx = db.transaction("logs", "readwrite");
+      const store = tx.objectStore("logs");
+      store.add({ message, timestamp: Date.now() });
+    }
+
+    function getLogsFromDB() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("logs", "readonly");
+        const store = tx.objectStore("logs");
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function clearDB() {
+      return new Promise((resolve, reject) => {
+        // Clear progress and logs
+        const tx1 = db.transaction("progress", "readwrite");
+        const store1 = tx1.objectStore("progress");
+        store1.put({ id: "progress", currentQuestion: 0, correct: 0, nonLetter: 0 });
+        tx1.oncomplete = () => {
+          const tx2 = db.transaction("logs", "readwrite");
+          const store2 = tx2.objectStore("logs");
+          const clearRequest = store2.clear();
+          clearRequest.onsuccess = () => resolve();
+          clearRequest.onerror = () => reject(clearRequest.error);
+        }
+        tx1.onerror = () => reject(tx1.error);
+      });
+    }
+
+    // --- Utility functions ---
+    const logDiv = document.getElementById("log");
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      logDiv.innerHTML += `<div class="mb-1"><span class="text-gray-500">[${timestamp}]</span> ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+      addLogToDB(message);
+    }
+
+    async function restoreLogs() {
+      try {
+        const logs = await getLogsFromDB();
+        if (logs.length) {
+          logDiv.innerHTML = "";
+          logs.forEach(item => {
+            const timestamp = new Date(item.timestamp).toLocaleTimeString();
+            logDiv.innerHTML += `<div class="mb-1"><span class="text-gray-500">[${timestamp}]</span> ${item.message}</div>`;
+          });
+          logDiv.scrollTop = logDiv.scrollHeight;
+        }
+      } catch (e) {
+        console.error("Error restoring logs:", e);
+      }
+    }
+
+    let progress = { currentQuestion: 0, correct: 0, nonLetter: 0 };
+    let questions = [];
+    let totalQuestions = 0;
+    
+    async function restoreProgress() {
+      try {
+        progress = await getProgress();
+        updateUI();
+      } catch (e) {
+        console.error("Error restoring progress:", e);
+      }
+    }
+
+    function updateUI() {
+        document.getElementById("currentCount").innerText = progress.currentQuestion;
+        document.getElementById("correctCount").innerText = progress.correct;
+        document.getElementById("questionCount").innerText = progress.currentQuestion;
+        const score = progress.currentQuestion > 0 ? (progress.correct / progress.currentQuestion * 100).toFixed(2) : 0;
+        document.getElementById("scorePercent").innerText = score;
+        document.getElementById("nonLetterCount").innerText = progress.nonLetter;
+        
+        // Update progress bar
+        const progressPercent = totalQuestions > 0 ? (progress.currentQuestion / totalQuestions * 100) : 0;
+        document.getElementById("progressBar").style.width = progressPercent + "%";
+        document.getElementById("footer-progress-bar").style.width = progressPercent + "%";
+    }
+
+    function mapIndexToLetter(idx) {
+      return String.fromCharCode(65 + idx);
+    }
+
+    let testing = false;
+    let session = null;
+
+    async function loadQuestions() {
+      try {
+        const resp = await fetch('MMLU_Tiny.json');
+        if (!resp.ok) {
+          throw new Error(`Failed to load MMLU_Tiny.json: ${resp.status}`);
+        }
+        const text = await resp.text();
+        let loadedQuestions = [];
+        text.split('\n').forEach(line => {
+          line = line.trim();
+          if (line) {
+            try {
+              const obj = JSON.parse(line);
+              loadedQuestions.push(obj);
+            } catch (err) {
+              log(`<span class="text-red-400">Error parsing JSON: ${err}</span>`);
+            }
+          }
+        });
+        
+        // If resuming, skip already completed questions
+        if (progress.currentQuestion > 0) {
+          loadedQuestions = loadedQuestions.slice(progress.currentQuestion);
+        }
+        
+        questions = loadedQuestions;
+        totalQuestions = progress.currentQuestion + loadedQuestions.length;
+        
+        if (progress.currentQuestion === 0) {
+          log(`<span class="text-green-400">Loaded ${totalQuestions} questions from MMLU_Tiny.json</span>`);
+        } else {
+          log(`<span class="text-yellow-400">Resuming from question ${progress.currentQuestion + 1} (${loadedQuestions.length} remaining)</span>`);
+        }
+        
+        updateUI();
+      } catch (err) {
+        log(`<span class="text-red-400">Error loading MMLU_Tiny.json: ${err}</span>`);
+        throw err;
+      }
+    }
+
+    async function askQuestion(qObj) {
+        const letterChoices = qObj.choices.map((choice, index) => `${mapIndexToLetter(index)}. ${choice}`).join('\n');
+        const promptText = `Respond with a single letter option only, no explanation.\n\nQuestion: ${qObj.question}\nChoices:\n${letterChoices}\nAnswer:`;
+        let answer = "";
+        try {
+          if (!session) {
+            session = await getLanguageModel().create({ temperature: 1.0, topK: 1 });
+          }
+          const stream = await session.promptStreaming(promptText);
+          for await (const chunk of stream) {
+            answer += chunk;
+          }
+        } catch (e) {
+          log(`<span class="text-red-400">Prompt API error: ${e}</span>`);
+          testing = false;
+          // Auto-resume after error
+          setTimeout(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("autoResume", "true");
+            window.location.href = url.toString();
+          }, 3000);
+          throw e;
+        }
+        return answer.trim();
+    }
+
+    function updateTestStatus(status) {
+        document.getElementById("test-status").innerText = status;
+        const progressContainer = document.getElementById("progress-container");
+        if (status === "Running") {
+            progressContainer.classList.remove("hidden");
+        } else {
+            progressContainer.classList.add("hidden");
+        }
+    }
+
+    async function runTests() {
+      testing = true;
+      document.getElementById("startTest").disabled = true;
+      document.getElementById("stopTest").disabled = false;
+      updateTestStatus("Running");
+
+      try {
+        if (questions.length === 0) {
+          await loadQuestions();
+        }
+
+        while (testing && questions.length > 0) {
+          const qObj = questions.shift();
+          progress.currentQuestion++;
+          
+          log(`<span class="text-blue-400">Q${progress.currentQuestion}: ${qObj.question.substring(0, 80)}${qObj.question.length > 80 ? '...' : ''}</span>`);
+          
+          let response = await askQuestion(qObj);
+          log(`Response: "${response}"`);
+
+          const singleLetterMatch = response.match(/^([A-Da-d])(?:\.[\s\S]*)?$/);
+          if (!singleLetterMatch) {
+            progress.nonLetter++;
+            log(`<span class="text-orange-400">Invalid response format</span>`);
+          } else {
+            const responseLetter = singleLetterMatch[1].toUpperCase();
+            const expectedLetter = mapIndexToLetter(qObj.answer);
+            if (responseLetter === expectedLetter) {
+              progress.correct++;
+              log(`<span class="text-green-400">✓ Correct (${expectedLetter})</span>`);
+            } else {
+              log(`<span class="text-red-400">✗ Incorrect (expected: ${expectedLetter})</span>`);
+            }
+          }
+          
+          await setProgress({ id: "progress", ...progress });
+          updateUI();
+          
+          // Small delay between questions
+          await new Promise(res => setTimeout(res, 200));
+        }
+        
+        if (questions.length === 0) {
+          log(`<span class="text-green-400">✅ Test completed! Final score: ${progress.correct}/${progress.currentQuestion} (${(progress.correct / progress.currentQuestion * 100).toFixed(2)}%)</span>`);
+        }
+      } catch (e) {
+        log(`<span class="text-red-400">Test error: ${e}</span>`);
+      }
+      
+      testing = false;
+      document.getElementById("startTest").disabled = false;
+      document.getElementById("stopTest").disabled = true;
+      updateTestStatus("Ready");
+    }
+
+    // --- Event listeners ---
+    document.getElementById("startTest").addEventListener("click", async () => {
+      try {
+        if (!session) {
+          log(`<span class="text-yellow-400">Initializing language model...</span>`);
+          session = await getLanguageModel().create({ temperature: 1.0, topK: 1 });
+          log(`<span class="text-green-400">Language model ready</span>`);
+        }
+        runTests();
+      } catch (e) {
+        log(`<span class="text-red-400">Error initializing session: ${e}</span>`);
+      }
+    });
+
+    document.getElementById("stopTest").addEventListener("click", () => {
+      testing = false;
+      document.getElementById("stopTest").disabled = true;
+      document.getElementById("startTest").disabled = false;
+      updateTestStatus("Paused");
+      log(`<span class="text-yellow-400">Test paused</span>`);
+    });
+
+    document.getElementById("clearResults").addEventListener("click", async () => {
+      try {
+        await clearDB();
+        progress = { currentQuestion: 0, correct: 0, nonLetter: 0 };
+        questions = [];
+        totalQuestions = 0;
+        updateUI();
+        logDiv.innerHTML = "";
+        log(`<span class="text-green-400">Results cleared</span>`);
+      } catch (e) {
+        log(`<span class="text-red-400">Error clearing results: ${e}</span>`);
+      }
+    });
+
+    // --- Initialization ---
+    (async () => {
+      try {
+        await initDB();
+        await restoreProgress();
+        await restoreLogs();
+        
+        // Check URL parameter for autoResume
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("autoResume") === "true") {
+          // Remove the autoResume parameter from the URL immediately
+          urlParams.delete("autoResume");
+          const newSearch = urlParams.toString();
+          const newUrl = window.location.pathname + (newSearch ? "?" + newSearch : "");
+          window.history.replaceState({}, '', newUrl);
+          
+          log(`<span class="text-cyan-400">Auto-resuming test in 2 seconds...</span>`);
+          // Wait 2 seconds then resume tests
+          setTimeout(() => {
+            runTests();
+          }, 2000);
+        }
+      } catch (e) {
+        console.error("DB initialization error:", e);
+      }
+    })();
+  </script>
+</body>
+</html>

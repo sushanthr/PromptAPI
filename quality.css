@@ -1,0 +1,87 @@
+/* ==========================================================================
+   Quality Benchmark - Additional Utility Classes
+   ========================================================================== */
+
+/* Grid Layout */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gap-4 { gap: 1rem; }
+
+/* Additional Colors */
+.text-orange-400 { color: #fb923c; }
+.text-cyan-400 { color: #22d3ee; }
+.text-gray-300 { color: #d1d5db; }
+
+/* Font utilities */
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* Text sizes */
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+
+/* Additional margin/padding */
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+
+/* Width and height */
+.h-2 { height: 0.5rem; }
+.h-64 { height: 16rem; }
+.w-full { width: 100%; }
+.w-90px { width: 90px; }
+
+/* Text alignment */
+.text-center { text-align: center; }
+
+/* Rounded corners */
+.rounded-full { border-radius: 9999px; }
+
+/* Responsive grid columns */
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Animation */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}
+
+/* Transitions */
+.transition-all { 
+    transition-property: all; 
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+.duration-300 { transition-duration: 300ms; }
+
+/* Overflow */
+.overflow-hidden { overflow: hidden; }
+
+/* Display utilities */
+.hidden { display: none; }
+
+/* Additional background colors */
+.bg-gray-850 { background-color: #1e293b; }
+
+/* Additional positioning */
+.justify-between { justify-content: space-between; }

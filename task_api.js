@@ -413,6 +413,7 @@ async function initialize() {
             showSuccess();
         } else if (downloadableCount > 0) {
             showError("Some models are downloadable - click to download");
+            setTimeout(initialize, 100);
         } else if (availableCount > 0) {
             showSuccess();
         } else {

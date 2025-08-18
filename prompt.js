@@ -28,7 +28,7 @@ function showError(message, isDownloading = false) {
         document.getElementById("model-icon").className = "material-icons text-red-400";
         document.getElementById("model-icon").innerText = "error";
         // Show download button for downloadable state
-        if (message.includes("downloadable")) {
+        if (message.includes("Downloadable")) {
             document.getElementById("download-btn").classList.remove("hidden");
         }
     }
@@ -69,6 +69,7 @@ async function createSession() {
 async function checkDownload() {
     try {
         let result = await getLanguageModel().availability();
+        console.log(result);
         if (result !== 'available') {
             setTimeout(checkDownload, 100);
         } else {
@@ -346,6 +347,7 @@ async function initialize() {
             showError(kNoModelError);
         } else if (result === 'downloadable') {
             showError("Model: Downloadable - click to download");
+            checkDownload();
         } else if (result === 'downloading') {
             showError("Model downloading...", true);
             checkDownload();

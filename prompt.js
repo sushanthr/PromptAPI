@@ -260,7 +260,7 @@ async function sendMessage(input) {
                 console.warn("Failed to parse schema constraint JSON:", parseError);
                 // See if it is a valid RegExp.
                 try {        
-                    const regex = new RegExp(rawConstraint);
+                    const regex = new RegExp(modelSettings.schemaConstraint);
                     options.responseConstraint = regex;
                 } catch (regexError) {
                     console.warn("Invalid regex in schema constraint:", regexError);
@@ -398,3 +398,4 @@ window.addEventListener("load", () => {
     }
 
 });
+

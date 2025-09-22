@@ -257,7 +257,15 @@ async function sendMessage(input) {
                 constraintObj = JSON.parse(modelSettings.schemaConstraint);
                 options.responseConstraint = constraintObj;
             } catch (parseError) {
-                console.error("Failed to parse schema constraint JSON:", parseError);
+                console.warn("Failed to parse schema constraint JSON:", parseError);
+                // See if it is a valid RegExp.
+                try {        
+                    const regex = new RegExp(rawConstraint);
+                    options.responseConstraint = regex;
+                } catch (regexError) {
+                    console.warn("Invalid regex in schema constraint:", regexError);
+                    error("Invalid schema constraint: not valid JSON or regex", false);
+                }
             }
         }
         
@@ -388,4 +396,5 @@ window.addEventListener("load", () => {
             if (session) createSession();
         });
     }
+
 });

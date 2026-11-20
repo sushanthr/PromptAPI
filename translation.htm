@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Translation - Prompt API</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
+<link href="translation.css" rel="stylesheet"/>
+<script src="translation-perf.js" defer></script>
+<script src="translation.js" defer></script>
+</head>
+<body class="flex flex-col h-screen">
+<header class="terminal-header p-4 flex justify-between items-center">
+<div class="flex items-center space-x-2">
+    <span class="material-icons text-blue-400" aria-hidden="true">translate</span>
+    <span class="text-sm">Browser Translation API</span>
+</div>
+<nav class="flex items-center space-x-6 text-sm" aria-label="Main navigation">
+<a class="hover:text-blue-400 transition-colors" href="index.htm">Chat</a>
+<a class="hover:text-blue-400 transition-colors" href="speed.htm">Speed</a>
+<a class="hover:text-blue-400 transition-colors" href="quality.htm">Quality</a>
+<a class="hover:text-blue-400 transition-colors" href="task_api.htm">Tasks</a>
+<span class="text-gray-500" aria-hidden="true">|</span>
+<a class="hover:text-blue-400 transition-colors" href="translation.htm" aria-current="page">Translation</a>
+<a class="hover:text-blue-400 transition-colors" href="speech.htm">Speech</a>
+</nav>
+</header>
+<main class="page-main translation-page flex-grow p-6 overflow-y-auto">
+<section class="translation-island" aria-labelledby="translation-title">
+    <div class="translation-heading">
+        <h1 id="translation-title">Translation</h1>
+        <button id="measure-perf" class="btn btn-secondary" type="button" disabled>Measure Perf</button>
+    </div>
+    <form id="translation-form">
+        <div class="translation-input-heading">
+            <div class="translation-source">
+                <label for="source-language" class="text-xs text-gray-400">Source language</label>
+                <div class="translation-source-controls">
+                    <select id="source-language" class="input-field" aria-describedby="detection-status">
+                        <option value="auto">Detect automatically</option>
+                    </select>
+                    <button id="enable-detection" class="btn btn-secondary text-xs hidden" type="button">Install LID model</button>
+                </div>
+            </div>
+        </div>
+        <div class="translation-detection">
+            <span id="detection-status" class="text-xs text-gray-400 hidden" role="status"></span>
+        </div>
+        <textarea id="translation-input" class="input-field" rows="4" dir="auto" placeholder="Enter text to translate..." aria-label="Source text"></textarea>
+        <div class="translation-actions">
+            <button id="clear-text" class="btn btn-secondary" type="button">Clear</button>
+            <div class="translation-destination">
+                <label for="target-language" class="text-xs text-gray-400">Translate to</label>
+                <select id="target-language" class="input-field"></select>
+                <button id="translate-btn" class="btn btn-primary" type="submit" disabled>
+                    <span class="material-icons" aria-hidden="true">translate</span>
+                    <span id="translate-label">Translate</span>
+                </button>
+            </div>
+        </div>
+    </form>
+    <p id="translation-status" class="text-sm text-gray-400" role="status" aria-live="polite">Checking translation support...</p>
+    <p id="perf-status" class="text-sm text-gray-400 hidden" role="status" aria-live="polite"></p>
+    <section id="perf-result" class="translation-result hidden" aria-labelledby="perf-title">
+        <h2 id="perf-title">English to Chinese performance</h2>
+        <dl class="perf-metrics">
+            <dt>Initial latency</dt><dd id="perf-latency"></dd>
+            <dt>Average output CPS</dt><dd id="perf-cps"></dd>
+            <dt>Download / provisioning</dt><dd id="perf-download"></dd>
+            <dt>Translator setup</dt><dd id="perf-setup"></dd>
+        </dl>
+        <p id="perf-summary" class="text-xs text-gray-400"></p>
+        <details>
+            <summary>Chinese translations</summary>
+            <div id="perf-translations" lang="zh-Hans" class="text-sm"></div>
+        </details>
+    </section>
+    <section id="translation-result" class="translation-result hidden" aria-labelledby="translation-output-title">
+        <h2 id="translation-output-title">Translation</h2>
+        <div id="translation-output" dir="auto" aria-live="polite"></div>
+    </section>
+</section>
+</main>
+</body>
+</html>

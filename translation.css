@@ -1,0 +1,185 @@
+.translation-page {
+    display: flex;
+}
+
+.translation-island {
+    width: min(100%, 44rem);
+    margin: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1.5rem;
+    background: var(--color-bg-secondary);
+}
+
+.translation-island h1 {
+    margin: 0;
+}
+
+.translation-heading,
+.translation-input-heading,
+.translation-actions,
+.translation-destination,
+.translation-detection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.translation-input-heading {
+    margin-top: 1rem;
+}
+
+.translation-island label {
+    margin: 0;
+}
+
+.translation-source {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.translation-source-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    max-width: 100%;
+}
+
+.translation-island select {
+    max-width: 100%;
+    min-height: 2.5rem;
+}
+
+.translation-detection {
+    justify-content: flex-end;
+    margin: 0.5rem 0;
+    text-align: right;
+}
+
+.translation-detection:has(.hidden) {
+    display: none;
+}
+
+#translation-input {
+    display: block;
+    width: 100%;
+    margin-top: 0.75rem;
+    min-height: 8rem;
+    field-sizing: content;
+    resize: vertical;
+    font-family: var(--font-family-controls);
+    font-size: 1rem;
+    line-height: 1.75;
+    background: var(--color-bg-primary);
+}
+
+.translation-actions {
+    margin-top: 1rem;
+}
+
+.translation-destination {
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+#translation-status[data-error="true"],
+#perf-status[data-error="true"] {
+    color: #f87171;
+}
+
+.translation-result {
+    border-top: 1px solid var(--color-border);
+    margin: 1rem 0 0;
+    padding-top: 0.5rem;
+}
+
+#translation-output {
+    max-height: 25vh;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: var(--font-family-controls);
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
+#translation-status {
+    margin-bottom: 0;
+}
+
+.perf-metrics {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+}
+
+.perf-metrics dd {
+    margin: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+#perf-result {
+    max-height: 35vh;
+    overflow-y: auto;
+}
+
+#perf-translations {
+    max-height: 20vh;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .translation-page {
+        padding: 1rem;
+    }
+
+    .translation-island {
+        padding: 1rem;
+    }
+
+    .translation-destination {
+        width: 100%;
+    }
+
+    .translation-destination select {
+        flex: 1;
+        min-width: 8rem;
+    }
+
+    .translation-island select {
+        width: min(100%, 16rem);
+        min-width: 0;
+    }
+
+    .translation-source {
+        max-width: 100%;
+    }
+
+    .translation-source-controls select {
+        flex: 1;
+        width: auto;
+    }
+
+    #enable-detection {
+        flex-shrink: 0;
+    }
+
+    .terminal-header nav {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .terminal-header nav > a {
+        margin-left: 0;
+    }
+}

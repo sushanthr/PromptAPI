@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Speech - Prompt API</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
+<link href="translation.css" rel="stylesheet"/>
+<link href="speech.css" rel="stylesheet"/>
+<script src="speech.js" defer></script>
+</head>
+<body class="flex flex-col h-screen">
+<header class="terminal-header p-4 flex justify-between items-center">
+<div class="flex items-center space-x-2">
+    <span class="material-icons text-blue-400" aria-hidden="true">mic</span>
+    <span class="text-sm">Browser SpeechRecognition API</span>
+</div>
+<nav class="flex items-center space-x-6 text-sm" aria-label="Main navigation">
+<a class="hover:text-blue-400 transition-colors" href="index.htm">Chat</a>
+<a class="hover:text-blue-400 transition-colors" href="speed.htm">Speed</a>
+<a class="hover:text-blue-400 transition-colors" href="quality.htm">Quality</a>
+<a class="hover:text-blue-400 transition-colors" href="task_api.htm">Tasks</a>
+<span class="text-gray-500" aria-hidden="true">|</span>
+<a class="hover:text-blue-400 transition-colors" href="translation.htm">Translation</a>
+<a class="hover:text-blue-400 transition-colors" href="speech.htm" aria-current="page">Speech</a>
+</nav>
+</header>
+<main class="page-main translation-page flex-grow p-6 overflow-y-auto">
+<section class="translation-island speech-island" aria-labelledby="speech-title">
+    <h1 id="speech-title">Speech</h1>
+    <p class="text-sm text-gray-400">Convert microphone audio or a media file to text.</p>
+    <div class="speech-settings">
+        <div class="speech-setting">
+            <span class="text-xs text-gray-400">Recognition mode</span>
+            <label class="speech-mode-toggle">
+                <input id="on-device" type="checkbox" role="switch" aria-label="On-device recognition" checked/>
+                <span id="recognition-mode-label">On-device</span>
+            </label>
+        </div>
+        <div class="speech-setting">
+            <label for="input-language" class="text-xs text-gray-400">Input language</label>
+            <select id="input-language" class="input-field">
+                <option value="en-US">English (en-US)</option>
+                <option value="de-DE">German (de-DE)</option>
+                <option value="it-IT">Italian (it-IT)</option>
+                <option value="pt-PT">Portuguese (pt-PT)</option>
+                <option value="es-ES">Spanish (es-ES)</option>
+                <option value="ko-KR">Korean (ko-KR)</option>
+            </select>
+        </div>
+        <div class="speech-setting">
+            <label for="audio-source" class="text-xs text-gray-400">Audio source</label>
+            <select id="audio-source" class="input-field">
+                <option value="microphone">Microphone</option>
+                <option value="file">File</option>
+            </select>
+        </div>
+        <div id="audio-file-row" class="speech-setting hidden">
+            <label for="media-file" class="text-xs text-gray-400">Media file</label>
+            <input id="media-file" class="input-field" type="file" accept="audio/*,video/*" disabled/>
+        </div>
+    </div>
+    <div id="media-preview" class="hidden"></div>
+    <div class="speech-meter-heading">
+        <span id="audio-meter-label" class="text-xs text-gray-400">Input audio meter</span>
+        <span id="audio-meter-hint" class="text-xs text-gray-400">Idle</span>
+    </div>
+    <div id="audio-meter" class="speech-meter" role="meter" aria-labelledby="audio-meter-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="audio-meter-bar"></div>
+    </div>
+    <div class="translation-actions">
+        <button id="reset" class="btn btn-secondary" type="button">Reset</button>
+        <div class="speech-run-actions">
+            <button id="stop" class="btn btn-secondary" type="button" disabled>Stop</button>
+            <button id="start" class="btn btn-primary" type="button" disabled>
+                <span class="material-icons" aria-hidden="true">mic</span>
+                <span>Start</span>
+            </button>
+        </div>
+    </div>
+    <p id="speech-status" class="text-sm text-gray-400" role="status" aria-live="polite">Checking speech recognition support...</p>
+    <section class="translation-result" aria-labelledby="transcript-title">
+        <h2 id="transcript-title">Transcript</h2>
+        <div id="speech-output" dir="auto" aria-live="polite" aria-relevant="text">
+            <span id="final-transcript"></span><span id="interim-transcript" class="text-gray-400"></span>
+        </div>
+    </section>
+</section>
+</main>
+</body>
+</html>

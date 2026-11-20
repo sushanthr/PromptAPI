@@ -3,38 +3,44 @@
 <head>
 <!-- [for https://sushanthr.github.io/] add the following to the head of any page -->
 <meta http-equiv="origin-trial" content="A+E01FEi0um6eDjkCNGWhC3YVDgkvqhhOFNSIAzfBwL6HRlRJEHUc2XOGdlPUqRzsfh6YtCIpvY2LItOiyyR/KAAAABYeyJvcmlnaW4iOiJodHRwczovL3N1c2hhbnRoci5naXRodWIuaW86NDQzIiwiZmVhdHVyZSI6IkFJUHJvbXB0QVBJIiwiZXhwaXJ5IjoxODAyOTI3NTYwfQ==">
+<meta http-equiv="origin-trial" content="A2U6/+Eh7hkhyjYo5D3aLaGOWUf89+t00rCsrOWG0vauovexeZZkjGSHz/Nb26UzTiOd9XEh0Su9EU8OP7Q+VgsAAABeeyJvcmlnaW4iOiJodHRwczovL3N1c2hhbnRoci5naXRodWIuaW86NDQzIiwiZmVhdHVyZSI6IkFJUHJvbXB0QVBJUGFyYW1zIiwiZXhwaXJ5IjoxNzk5MDQyNzAwfQ==">
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Prompt API - Quality Benchmark</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 <link href="style.css" rel="stylesheet"/>
 <link href="quality.css" rel="stylesheet"/>
+<script src="prompt-api.js"></script>
 </head>
 <body class="flex flex-col h-screen">
 <header class="terminal-header p-4 flex justify-between items-center">
 <div class="flex items-center space-x-4">
 <div class="flex items-center space-x-2">
-        <span id="model-icon" class="material-icons text-green-400">check_circle</span>
-        <span id="model-status" class="text-sm">Model: Available</span>
+        <span id="model-icon" class="material-icons text-gray-400">help</span>
+        <span id="model-status" class="text-sm" aria-live="polite">Checking model availability...</span>
         <button id="download-btn" class="btn btn-secondary text-xs hidden">Download Model</button>
 </div>
 </div>
 <nav class="flex items-center space-x-6 text-sm">
 <a class="hover:text-blue-400 transition-colors" href="index.htm">Chat</a>
 <a class="hover:text-blue-400 transition-colors" href="speed.htm">Speed</a>
-<a class="hover:text-blue-400 transition-colors" href="quality.htm">Quality</a>
+<a class="hover:text-blue-400 transition-colors" href="quality.htm" aria-current="page">Quality</a>
 <a class="hover:text-blue-400 transition-colors" href="task_api.htm">Tasks</a>
+<span class="text-gray-500" aria-hidden="true">|</span>
+<a class="hover:text-blue-400 transition-colors" href="translation.htm">Translation</a>
+<a class="hover:text-blue-400 transition-colors" href="speech.htm">Speech</a>
 </nav>
 </header>
-<main class="flex-grow p-6 flex flex-col overflow-y-auto overflow-x-hidden bg-gray-900">
+<main class="page-main flex-grow p-6 flex flex-col overflow-y-auto overflow-x-hidden bg-gray-900">
     <div class="container"> 
-        <h1 class="text-2xl font-bold text-gray-200 mb-6">Quality Benchmark</h1>
-        <p class="text-gray-400 mb-6">
+        <h1 class="page-heading text-2xl font-bold text-gray-200">Quality Benchmark</h1>
+        <p class="page-description text-sm text-gray-400">
             This test runs through a tiny subset of MMLU dataset, prompts the language model with each question, and tallies the number of correct single-letter answers.
         </p>
+        <p class="text-xs text-gray-400 mb-6">Each question uses an isolated session. <span id="sampling-status" aria-live="polite">Checking sampling support...</span></p>
         
-        <div class="flex space-x-4 mb-6">
+        <div class="page-actions">
             <button id="startTest" class="btn btn-primary">
                 <span class="material-icons text-sm mr-2">play_arrow</span>Start Test
             </button>
@@ -47,7 +53,7 @@
         </div>
 
         <div class="bg-gray-850 rounded-lg border border-gray-700 p-6 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div class="quality-metrics grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div class="text-center">
                     <div class="text-2xl font-mono text-blue-400" id="correctCount">0</div>
                     <div class="text-gray-400 text-sm">Correct Answers</div>
@@ -57,11 +63,11 @@
                     <div class="text-gray-400 text-sm">Total Questions</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl font-mono text-blue-400" id="scorePercent">0</div>
+                    <div class="score-value font-mono text-blue-400" id="scorePercent">&mdash;</div>
                     <div class="text-gray-400 text-sm">Score (%)</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl font-mono text-orange-400" id="nonLetterCount">0</div>
+                    <div class="text-2xl font-mono text-gray-400" id="nonLetterCount">0</div>
                     <div class="text-gray-400 text-sm">Invalid Responses</div>
                 </div>
             </div>
@@ -94,8 +100,10 @@
 
 <script type="module">
     function getLanguageModel() {
-        // Try the new API first, then fall back to legacy
-        return window.LanguageModel ? window.LanguageModel : window.ai.languageModel;
+        if (!window.LanguageModel) {
+            throw new Error("Prompt API is not supported in this browser.");
+        }
+        return window.LanguageModel;
     }
 
     // --- IndexedDB functions ---
@@ -218,9 +226,11 @@
         document.getElementById("currentCount").innerText = progress.currentQuestion;
         document.getElementById("correctCount").innerText = progress.correct;
         document.getElementById("questionCount").innerText = progress.currentQuestion;
-        const score = progress.currentQuestion > 0 ? (progress.correct / progress.currentQuestion * 100).toFixed(2) : 0;
+        const score = progress.currentQuestion > 0 ? (progress.correct / progress.currentQuestion * 100).toFixed(2) : "\u2014";
         document.getElementById("scorePercent").innerText = score;
         document.getElementById("nonLetterCount").innerText = progress.nonLetter;
+        document.getElementById("nonLetterCount").classList.toggle("text-orange-400", progress.nonLetter > 0);
+        document.getElementById("nonLetterCount").classList.toggle("text-gray-400", progress.nonLetter === 0);
         
         // Update progress bar
         const progressPercent = totalQuestions > 0 ? (progress.currentQuestion / totalQuestions * 100) : 0;
@@ -234,6 +244,7 @@
 
     let testing = false;
     let session = null;
+    let testController = null;
 
     async function loadQuestions() {
       try {
@@ -276,28 +287,32 @@
       }
     }
 
-    async function askQuestion(qObj) {
+    async function askQuestion(qObj, signal) {
         const letterChoices = qObj.choices.map((choice, index) => `${mapIndexToLetter(index)}. ${choice}`).join('\n');
         const promptText = `Respond with a single letter option only, no explanation.\n\nQuestion: ${qObj.question}\nChoices:\n${letterChoices}\nAnswer:`;
         let answer = "";
+        let questionSession = null;
         try {
-          if (!session) {
-            session = await getLanguageModel().create({ temperature: 1.0, topK: 1 });
-          }
-          const stream = await session.promptStreaming(promptText);
+          questionSession = await session.clone({ signal });
+          signal.throwIfAborted();
+          const stream = questionSession.promptStreaming(promptText, { signal });
           for await (const chunk of stream) {
             answer += chunk;
           }
+          signal.throwIfAborted();
         } catch (e) {
-          log(`<span class="text-red-400">Prompt API error: ${e}</span>`);
-          testing = false;
-          // Auto-resume after error
-          setTimeout(() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set("autoResume", "true");
-            window.location.href = url.toString();
-          }, 3000);
+          if (!signal.aborted) {
+            log(`<span class="text-red-400">Prompt API error: ${e}</span>`);
+            // Auto-resume after an inference error, but not after Stop.
+            setTimeout(() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set("autoResume", "true");
+              window.location.href = url.toString();
+            }, 3000);
+          }
           throw e;
+        } finally {
+          if (questionSession) questionSession.destroy();
         }
         return answer.trim();
     }
@@ -313,23 +328,45 @@
     }
 
     async function runTests() {
+      if (testController) return;
+      const controller = new AbortController();
+      testController = controller;
       testing = true;
       document.getElementById("startTest").disabled = true;
       document.getElementById("stopTest").disabled = false;
+      document.getElementById("clearResults").disabled = true;
       updateTestStatus("Running");
 
       try {
+        const options = getSamplingOptions("most-predictable");
+        const model = getLanguageModel();
+        const availability = await getModelAvailability(options);
+        updateModelAvailability(availability);
+        controller.signal.throwIfAborted();
+        if (availability === "unavailable") {
+          throw new Error("No model is available with the requested configuration.");
+        }
+        log(`<span class="text-yellow-400">Initializing language model...</span>`);
+        session = await model.create({ ...options, signal: controller.signal });
+        controller.signal.throwIfAborted();
+        if (options.samplingMode && session.samplingMode !== options.samplingMode) {
+          throw new Error("Sampling modes are not supported or enabled. Check browser flags or the sampling-parameters origin trial.");
+        }
+        updateModelAvailability("available");
+        log(`<span class="text-green-400">Language model ready</span>`);
         if (questions.length === 0) {
           await loadQuestions();
         }
 
         while (testing && questions.length > 0) {
-          const qObj = questions.shift();
+          const qObj = questions[0];
+          
+          log(`<span class="text-blue-400">Q${progress.currentQuestion + 1}: ${qObj.question.substring(0, 80)}${qObj.question.length > 80 ? '...' : ''}</span>`);
+          
+          let response = await askQuestion(qObj, controller.signal);
+          controller.signal.throwIfAborted();
+          questions.shift();
           progress.currentQuestion++;
-          
-          log(`<span class="text-blue-400">Q${progress.currentQuestion}: ${qObj.question.substring(0, 80)}${qObj.question.length > 80 ? '...' : ''}</span>`);
-          
-          let response = await askQuestion(qObj);
           log(`Response: "${response}"`);
 
           const singleLetterMatch = response.match(/^([A-Da-d])(?:\.[\s\S]*)?$/);
@@ -354,37 +391,35 @@
           await new Promise(res => setTimeout(res, 200));
         }
         
-        if (questions.length === 0) {
+        if (!controller.signal.aborted && questions.length === 0) {
           log(`<span class="text-green-400">✅ Test completed! Final score: ${progress.correct}/${progress.currentQuestion} (${(progress.correct / progress.currentQuestion * 100).toFixed(2)}%)</span>`);
         }
       } catch (e) {
-        log(`<span class="text-red-400">Test error: ${e}</span>`);
+        if (!controller.signal.aborted) {
+          log(`<span class="text-red-400">Test error: ${e}</span>`);
+          document.getElementById("model-status").innerText = "Error: " + e.message;
+          document.getElementById("model-icon").className = "material-icons text-red-400";
+          document.getElementById("model-icon").innerText = "error";
+        }
+      } finally {
+        if (session) session.destroy();
+        session = null;
+        testing = false;
+        testController = null;
+        document.getElementById("startTest").disabled = false;
+        document.getElementById("stopTest").disabled = true;
+        document.getElementById("clearResults").disabled = false;
+        updateTestStatus(controller.signal.aborted ? "Paused" : "Ready");
       }
-      
-      testing = false;
-      document.getElementById("startTest").disabled = false;
-      document.getElementById("stopTest").disabled = true;
-      updateTestStatus("Ready");
     }
 
     // --- Event listeners ---
-    document.getElementById("startTest").addEventListener("click", async () => {
-      try {
-        if (!session) {
-          log(`<span class="text-yellow-400">Initializing language model...</span>`);
-          session = await getLanguageModel().create({ temperature: 1.0, topK: 1 });
-          log(`<span class="text-green-400">Language model ready</span>`);
-        }
-        runTests();
-      } catch (e) {
-        log(`<span class="text-red-400">Error initializing session: ${e}</span>`);
-      }
-    });
+    document.getElementById("startTest").addEventListener("click", runTests);
 
     document.getElementById("stopTest").addEventListener("click", () => {
       testing = false;
+      if (testController) testController.abort();
       document.getElementById("stopTest").disabled = true;
-      document.getElementById("startTest").disabled = false;
       updateTestStatus("Paused");
       log(`<span class="text-yellow-400">Test paused</span>`);
     });
@@ -404,6 +439,7 @@
     });
 
     // --- Initialization ---
+    initializeModelStatus(getSamplingOptions("most-predictable"));
     (async () => {
       try {
         await initDB();

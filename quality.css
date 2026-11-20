@@ -14,15 +14,6 @@
 .text-cyan-400 { color: #22d3ee; }
 .text-gray-300 { color: #d1d5db; }
 
-/* Font utilities */
-.font-mono { font-family: 'JetBrains Mono', monospace; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-
-/* Text sizes */
-.text-2xl { font-size: 1.5rem; line-height: 2rem; }
-.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-
 /* Additional margin/padding */
 .mb-1 { margin-bottom: 0.25rem; }
 .mb-2 { margin-bottom: 0.5rem; }
@@ -79,9 +70,6 @@
 
 /* Display utilities */
 .hidden { display: none; }
-
-/* Additional background colors */
-.bg-gray-850 { background-color: #1e293b; }
 
 /* Additional positioning */
 .justify-between { justify-content: space-between; }

@@ -1,8 +1,7 @@
 // Prompt API Speed Benchmark JavaScript
 
 function getLanguageModel() {
-    // Try the new API first, then fall back to legacy
-    return window.LanguageModel ? window.LanguageModel : window.ai.languageModel;
+    return window.LanguageModel;
 }
 
 const k1KTokenPrompt = `Summarize this text: The National Aeronautics and Space Administration (NASA /ˈnæsə/) is an independent agency of the U.S. federal government responsible for the civil space program, aeronautics research, and space research. Established in 1958, it succeeded the National Advisory Committee for Aeronautics (NACA) to give the U.S. space development effort a distinct civilian orientation, emphasizing peaceful applications in space science. It has since led most of America's space exploration programs, including Project Mercury, Project Gemini, the 1968–1972 Apollo Moon landing missions, the Skylab space station, and the Space Shuttle. Currently, NASA supports the International Space Station (ISS) along with the Commercial Crew Program, and oversees the development of the Orion spacecraft and the Space Launch System for the lunar Artemis program.
@@ -76,8 +75,8 @@ Pse`;
 
 // Error handling and utility functions
 let success = true;
-const kFeatureFlagError = "Prompt API is not detected. Check feature flags are enabled, and that this is Canary.</li>";
-const kNoModelError = "Prompt API is available, feature flag is likely set correctly but no models are available.";
+const kFeatureFlagError = "Prompt API is not detected. Use a supporting browser and enable the API if required.";
+const kNoModelError = "Prompt API is available, but no models are available. Is On-device AI enabled in chrome://settings/ai.";
 const kDownloadError = "Prompt API is available, but model hasn't downloaded. To run benchmark, please try after model download.";
 
 function showError(message, isDownloading = false) {
@@ -138,29 +137,32 @@ const kMillisecond = 1000;
 let session_controller = null;
 
 async function CheckCapabilitiesAndCreateSession() {
+    const options = getSamplingOptions("most-predictable");
+    let result;
     try {
-        result = await getLanguageModel().availability();
-        if (result == 'unavailable') {
-            showError(kNoModelError);
-        }
-        if (result == 'downloadable' || result == 'downloading') {
-            // call the API to trigger download.
-            showError(kDownloadError);
-        }
-        if (result != 'available') {
-            showError("Cannot create model now - " + result);
-        }
+        result = await getModelAvailability(options);
+        updateModelAvailability(result);
     }
     catch (e) {
         if (e.name === "TypeError") {
             showError(kFeatureFlagError);
         }
+        showError("Cannot check model availability: " + e);
     }
+    if (result === 'unavailable') showError(kNoModelError);
+    if (result === 'downloadable' || result === 'downloading') showError(kDownloadError);
+    if (result !== 'available') showError("Cannot create model now - " + result);
     var session = null;
     try {
         session_controller = new AbortController();
-        session = await getLanguageModel().create({temperature: 1.0, topK: 1, signal: session_controller.signal});
-        return session;
+        const creationStart = performance.now();
+        session = await getLanguageModel().create({...options, signal: session_controller.signal});
+        const creationTime = performance.now() - creationStart;
+        if (options.samplingMode && session.samplingMode !== options.samplingMode) {
+            session.destroy();
+            throw new Error("Sampling modes are not supported or enabled. Check browser flags or the sampling-parameters origin trial.");
+        }
+        return {session, creationTime};
     }
     catch (e) {
         showError("Cannot create session now - " + e);
@@ -168,81 +170,141 @@ async function CheckCapabilitiesAndCreateSession() {
     return null;
 }
 
-async function MeasureLoadTime(prompt, element) {
+async function MeasureLoadTime(prompt, element, showSessionMetrics = false) {
+    let session = null;
     try {
         showBusy(true);
         let start = performance.now();
         // Check capabilities.
-        let session = await CheckCapabilitiesAndCreateSession();
+        const created = await CheckCapabilitiesAndCreateSession();
+        session = created.session;
+        const promptStart = performance.now();
         let stream = session.promptStreaming(prompt);
-        let end = start;
-        let is_first_token = true;
+        let end = null;
         for await (const chunk of stream) {
-            if (is_first_token) {
-                is_first_token = false;
-                end = performance.now();
-            } else {
-                session_controller.abort();
-            }
+            if (!chunk) continue;
+            end = performance.now();
+            break;
         }
-        showBusy(false);
-        element.innerText = (end - start).toFixed(2);
+        if (end === null) {
+            throw new Error("The response stream ended without producing a token.");
+        }
+        if (showSessionMetrics) {
+            const initialPromptTTFT = end - promptStart;
+            document.getElementById("session-creation-time").innerText = created.creationTime.toFixed(2);
+            document.getElementById("initial-prompt-ttft").innerText = initialPromptTTFT.toFixed(2);
+            document.getElementById("total-ttft").innerText = (created.creationTime + initialPromptTTFT).toFixed(2);
+        } else {
+            element.innerText = (end - start).toFixed(2);
+        }
         return (end - start);
     }
     catch (e) {
         showError("Something went wrong " + e);
     }
+    finally {
+        if (session) session.destroy();
+        showBusy(false);
+    }
 }
 
 async function MeasureTPS(prompt, element1, element2, element3) {
-    showBusy(true);
-    let start = 0;
-    let interval1 = 0;
-    let interval2 = 0;
-    // Check capabilities.
-    let session = await CheckCapabilitiesAndCreateSession();
-    let stream = session.promptStreaming(prompt);
-    let count = 0;
-    const num_ignore_tokens = 10;
-    const num_initial_tokens = 50;
-    const num_final_tokens = 100;
-    element3.innerText = "";
-    for await (const chunk of stream) {
-        count ++;
-        element3.innerText = chunk;
-        if (count == num_ignore_tokens) {
-            start = performance.now();
+    let session = null;
+    try {
+        showBusy(true);
+        let start = 0;
+        let interval1 = 0;
+        let interval2 = 0;
+        // Check capabilities.
+        ({session} = await CheckCapabilitiesAndCreateSession());
+        let stream = session.promptStreaming(prompt);
+        let count = 0;
+        const num_ignore_tokens = 10;
+        const num_initial_tokens = 50;
+        const num_final_tokens = 100;
+        element3.innerText = "";
+        for await (const chunk of stream) {
+            count ++;
+            element3.innerText = chunk;
+            if (count == num_ignore_tokens) {
+                start = performance.now();
+            }
+            else if (count == num_initial_tokens) {
+                let end = performance.now();
+                interval1 = (((num_initial_tokens-num_ignore_tokens)*kMillisecond)/(end - start));
+                element1.innerText = (interval1).toFixed(2);
+                start = performance.now();
+            }
+            else if (count == num_final_tokens) {
+                let end = performance.now();
+                interval2 = (((num_final_tokens-num_initial_tokens)*kMillisecond)/(end - start));
+                element2.innerText = (interval2).toFixed(2);
+                break;
+            }
         }
-        else if (count == num_initial_tokens) {
-            let end = performance.now();
-            interval1 = (((num_initial_tokens-num_ignore_tokens)*kMillisecond)/(end - start));
-            element1.innerText = (interval1).toFixed(2);
-            start = performance.now();
+        for await (const chunk of stream) {
+            // Drain the stream.
         }
-        else if (count == num_final_tokens) {
-            let end = performance.now();
-            interval2 = (((num_final_tokens-num_initial_tokens)*kMillisecond)/(end - start));
-            element2.innerText = (interval2).toFixed(2);
-            break;
+        if (interval1 == 0 || interval2 == 0) {
+            showError("Failed to measure, response was likley < " + num_final_tokens + " tokens.");
         }
+        return {interval1, interval2};
     }
-    for await (const chunk of stream) {
-        // Drain the stream.
+    finally {
+        if (session) session.destroy();
+        showBusy(false);
     }
-    showBusy(false);
-    if (interval1 == 0 || interval2 == 0) {
-        showError("Failed to measure, response was likley < " + num_final_tokens + " tokens.");
-    }
-    return {interval1, interval2};
 }
 
-async function RunPrefillTest() {
-    let duration = await MeasureLoadTime(k1KTokenPrompt2, document.getElementById("1kt1"));
-    duration += await MeasureLoadTime(k1KTokenPrompt, document.getElementById("1kt2"));
-    duration += await MeasureLoadTime(k1KTokenPrompt2, document.getElementById("1kt3"));
-    duration += await MeasureLoadTime(k1KTokenPrompt, document.getElementById("1kt4"));
-    duration += await MeasureLoadTime(k1KTokenPrompt2, document.getElementById("1kt5"));
-    document.getElementById("time-to-prefill-1k").innerText = (duration / 5).toFixed(2);
+const kPrefillPrompts = [k1KTokenPrompt2, k1KTokenPrompt, k1KTokenPrompt2, k1KTokenPrompt, k1KTokenPrompt2];
+
+async function RunPrefillTest(measureTokens = true) {
+    let duration = 0;
+    for (let i = 0; i < kPrefillPrompts.length; i++) {
+        document.getElementById(`1k-tokens-${i + 1}`).innerText = "Pending";
+    }
+    document.getElementById("prefill-token-status").innerText = "Input token counts will be measured after benchmarking.";
+    for (let i = 0; i < kPrefillPrompts.length; i++) {
+        duration += await MeasureLoadTime(kPrefillPrompts[i], document.getElementById(`1kt${i + 1}`));
+    }
+    document.getElementById("time-to-prefill-1k").innerText = (duration / kPrefillPrompts.length).toFixed(2);
+    if (measureTokens) await MeasurePrefillTokenCounts();
+}
+
+async function MeasurePrefillTokenCounts() {
+    let session = null;
+    const status = document.getElementById("prefill-token-status");
+    try {
+        showBusy(true);
+        status.innerText = "Measuring input token counts using the active model...";
+        ({session} = await CheckCapabilitiesAndCreateSession());
+        if (typeof session.measureContextUsage !== "function") {
+            throw new Error("This browser does not support measuring input token counts.");
+        }
+        const counts = [];
+        for (const prompt of kPrefillPrompts) {
+            const count = await session.measureContextUsage(prompt);
+            if (!Number.isInteger(count) || count < 0) {
+                throw new Error("The model returned an invalid input token count.");
+            }
+            counts.push(count);
+        }
+        counts.forEach((count, i) => {
+            document.getElementById(`1k-tokens-${i + 1}`).innerText = count.toLocaleString();
+        });
+        status.innerText = "Active model input counts include control tokens. Measured after all timing runs.";
+    }
+    catch (e) {
+        for (let i = 0; i < kPrefillPrompts.length; i++) {
+            document.getElementById(`1k-tokens-${i + 1}`).innerText = "Unavailable";
+        }
+        status.innerText = "Input token counts unavailable. Benchmark timings are unchanged.";
+        showError("Unable to measure input token counts: " + e);
+    }
+    finally {
+        if (session) session.destroy();
+        showBusy(false);
+    }
 }
 
 async function RunTPStest() {
@@ -275,13 +337,16 @@ async function RunTPStest() {
 }
 
 async function MeasureAll() {
-    await MeasureLoadTime("Hi", document.getElementById("time-to-first-token"));
-    await RunPrefillTest();
+    await MeasureLoadTime("Hi", null, true);
+    await RunPrefillTest(false);
     await RunTPStest();
+    await MeasurePrefillTokenCounts();
 }
 
 function saveResults() {
-    const timeToFirstToken = document.getElementById('time-to-first-token').innerText;
+    const sessionCreationTime = document.getElementById('session-creation-time').innerText;
+    const initialPromptTTFT = document.getElementById('initial-prompt-ttft').innerText;
+    const totalTTFT = document.getElementById('total-ttft').innerText;
     const timeToPrefill1k = document.getElementById('time-to-prefill-1k').innerText;
     const tpsResult = document.getElementById('tps-result').innerText;
 
@@ -295,8 +360,10 @@ function saveResults() {
         browserName, // Browser
         browserVersion, // Browser Version
         gpuInfo, // GPU Info
-        timeToFirstToken, // Time to first token
-        timeToPrefill1k, // Time to prefill 1K tokens (ms)
+        sessionCreationTime, // Session creation (ms)
+        initialPromptTTFT, // Initial prompt TTFT (ms)
+        totalTTFT, // Total TTFT (ms)
+        timeToPrefill1k, // TTFT 1K Phi4 Mini tokens (ms)
         tpsResult // Time to generate tokens (tps)
     ];
 
@@ -340,3 +407,7 @@ function getGpuInfo() {
     const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
     return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
 }
+
+window.addEventListener("load", () => {
+    initializeModelStatus(getSamplingOptions("most-predictable"));
+});

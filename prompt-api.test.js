@@ -42,7 +42,7 @@ function setup(availability, chat = false) {
         localStorage: { getItem() { return null; }, setItem() {} },
         AbortController
     });
-    for (const file of chat ? ["prompt-api.js", "prompt-tools.js", "prompt.js"] : ["prompt-api.js"]) {
+    for (const file of chat ? ["prompt-api.js", "prompt-tools.js", "watermark.js", "prompt.js"] : ["prompt-api.js"]) {
         vm.runInContext(fs.readFileSync(path.join(__dirname, file), "utf8"), context);
     }
     return {
@@ -118,4 +118,117 @@ test("JSON and Regex fields create distinct constraints without implicit fallbac
     assert.throws(() => context.getResponseConstraint("not JSON", ""), /JSON/);
     assert.throws(() => context.getResponseConstraint("", "["), /regular expression/i);
     assert.throws(() => context.getResponseConstraint('{"type":"object"}', ".*"), /not both/);
+});
+
+test("clearing the chat releases conversation context, restores the empty state and resets metrics", () => {
+    const state = setup("available", true);
+    const output = {
+        scrollTop: 100,
+        children: [{ id: "old-message" }],
+        replaceChildren(...children) { this.children = children; }
+    };
+    state.elements.set("chat-output", output);
+    for (const id of ["chars-per-sec", "tokens-per-sec", "start-latency", "watermark-count"]) {
+        state.elements.set(id, { textContent: "99" });
+    }
+    let destroyed = 0;
+    state.context.session = { destroy() { destroyed++; } };
+    vm.runInContext('watermarkCounter.update("\\u200B\\u034F\\u2060\\u200B");', state.context);
+    vm.runInContext('chatEmptyState = { cloneNode() { return { id: "chat-empty-state" }; } };', state.context);
+    state.context.clearChat();
+    assert.equal(destroyed, 1);
+    assert.equal(state.context.session, null);
+    assert.equal(output.children.length, 1);
+    assert.equal(output.children[0].id, "chat-empty-state");
+    assert.equal(output.scrollTop, 0);
+    for (const id of ["chars-per-sec", "tokens-per-sec", "start-latency", "watermark-count"]) {
+        assert.equal(state.elements.get(id).textContent, "0");
+    }
+});
+
+test("watermark counts accumulate across responses without recounting streamed prefixes", () => {
+    const context = vm.createContext({});
+    vm.runInContext(fs.readFileSync(path.join(__dirname, "watermark.js"), "utf8"), context);
+    const counter = context.createWatermarkCounter();
+    const watermark = "\u200B\u034F\u2060\u200B";
+    const text = `First ${watermark} second ${watermark}${watermark}`;
+    counter.startResponse();
+    for (let end = 1; end <= text.length; end++) {
+        assert.equal(counter.update(text.slice(0, end)),
+            [text.indexOf(watermark) + 4, text.indexOf(watermark, 10) + 4, text.length]
+                .filter(position => position <= end).length);
+    }
+    assert.equal(counter.update(text), 3);
+    counter.startResponse();
+    assert.equal(counter.update("No watermark \u200B\u2060\u034F\u200B"), 3);
+    counter.startResponse();
+    assert.equal(counter.update(watermark), 4);
+    counter.reset();
+    assert.equal(counter.update(""), 0);
+    assert.equal(counter.update(watermark), 1);
+});
+
+test("chat rendering counts raw model output cumulatively, including split sequences", () => {
+    const state = setup("available", true);
+    for (const id of ["watermark-count", "chars-per-sec", "tokens-per-sec", "start-latency"]) {
+        state.elements.set(id, { textContent: "" });
+    }
+    state.context.marked = { parse() { return "<p>Rendered output without watermark</p>"; } };
+    vm.runInContext('updateElement = { innerText: "Rendered output" }; startTime = Date.now();', state.context);
+    const output = { scrollHeight: 100 };
+    const watermark = "\u200B\u034F\u2060\u200B";
+    state.context.renderStreamedText(watermark.slice(0, 3), output);
+    assert.equal(state.elements.get("watermark-count").textContent, 0);
+    state.context.renderStreamedText(watermark, output);
+    state.context.renderStreamedText(`${watermark} more text`, output);
+    assert.equal(state.elements.get("watermark-count").textContent, 1);
+    vm.runInContext("watermarkCounter.startResponse();", state.context);
+    state.context.renderStreamedText(watermark + watermark, output);
+    assert.equal(state.elements.get("watermark-count").textContent, 3);
+});
+
+test("writing assistance counts raw streaming and plain-text output and resets on clear", async () => {
+    const state = setup("available");
+    for (const id of ["watermark-count", "processing-time", "input-chars", "output-chars", "input-text"]) {
+        state.elements.set(id, { textContent: "", value: "" });
+    }
+    state.elements.set("output-content", {
+        classList: { remove() {}, toggle() {} }, textContent: "", innerHTML: ""
+    });
+    state.context.marked = { parse() { return "<p>Formatted output</p>"; } };
+    for (const file of ["watermark.js", "task_api.js"]) {
+        vm.runInContext(fs.readFileSync(path.join(__dirname, file), "utf8"), state.context);
+    }
+    const watermark = "\u200B\u034F\u2060\u200B";
+    state.context.renderOutput(watermark.slice(0, 2), "markdown");
+    assert.equal(state.elements.get("watermark-count").textContent, 0);
+    state.context.renderOutput(watermark, "markdown");
+    state.context.renderOutput(watermark, "markdown");
+    assert.equal(state.elements.get("watermark-count").textContent, 1);
+    state.elements.get("input-text").value = watermark;
+    state.elements.set("sum-context", { value: "" });
+    const streaming = { checked: true };
+    state.elements.set("streaming-checkbox", streaming);
+    state.context.testSession = {
+        async *summarizeStreaming() {
+            yield watermark.slice(0, 2);
+            yield watermark.slice(2);
+            yield watermark;
+        },
+        async summarize() { return watermark; }
+    };
+    vm.runInContext(`
+        taskModels.summarizer.getConfig = () => ({ format: "plain-text" });
+        createTaskSession = async () => testSession;
+        setBusy = () => {};
+    `, state.context);
+    await state.context.processText();
+    assert.equal(state.elements.get("watermark-count").textContent, 3);
+    streaming.checked = false;
+    await state.context.processText();
+    assert.equal(state.elements.get("watermark-count").textContent, 4);
+    state.context.clearContent();
+    assert.equal(state.elements.get("watermark-count").textContent, "0");
+    state.context.renderOutput(watermark, "plain-text");
+    assert.equal(state.elements.get("watermark-count").textContent, 1);
 });

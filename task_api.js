@@ -1,6 +1,7 @@
 let currentTask = 'summarizer';
 let isProcessing = false;
 let activeController = null;
+const watermarkCounter = createWatermarkCounter();
 
 const taskModels = {
     summarizer: { name: 'Summarizer', method: 'summarize', getConfig: getSummarizerConfig, session: null, configKey: null, status: 'unknown', version: 0 },
@@ -204,6 +205,7 @@ function renderOutput(result, format) {
     } else {
         output.innerHTML = marked.parse(result);
     }
+    document.getElementById("watermark-count").textContent = watermarkCounter.update(result);
 }
 
 async function processText() {
@@ -224,6 +226,7 @@ async function processText() {
     const useStreaming = document.getElementById("streaming-checkbox").checked;
     const controller = new AbortController();
     activeController = controller;
+    watermarkCounter.startResponse();
     setBusy(true);
     const startTime = Date.now();
     setOutputMessage("Applying configuration and processing...");
@@ -269,6 +272,8 @@ function clearContent() {
     document.getElementById("processing-time").textContent = "0";
     document.getElementById("input-chars").textContent = "0";
     document.getElementById("output-chars").textContent = "0";
+    watermarkCounter.reset();
+    document.getElementById("watermark-count").textContent = "0";
 }
 
 async function downloadModels() {

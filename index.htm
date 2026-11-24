@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="prompt-api.js"></script>
 <script src="prompt-tools.js"></script>
+<script src="watermark.js"></script>
 <script src="prompt.js"></script>
 </head>
 <body class="flex flex-col h-screen">
@@ -131,7 +132,7 @@
         </fieldset>
 </details>
 <div>
-<button class="btn btn-secondary w-90 mt-2">Apply Settings</button>
+<button class="btn btn-secondary w-90 mt-2" title="Clear the conversation and create a new session with these settings">Apply Settings</button>
 </div>
 </div>
 </main>
@@ -139,6 +140,7 @@
 <span>Char/s: <span id="chars-per-sec">0</span></span>
 <span>Tokens/s: <span id="tokens-per-sec">0</span></span>
 <span>Start Latency (ms): <span id="start-latency">0</span></span>
+<span>Watermark: <span id="watermark-count">0</span></span>
 </footer>
 </body>
 </html>

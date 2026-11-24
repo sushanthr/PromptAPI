@@ -6,6 +6,9 @@ let creationController = null;
 var session = null;
 let sessionTools = new Map();
 let isStreaming = false;
+let responsePromise = null;
+let chatEmptyState = null;
+const watermarkCounter = createWatermarkCounter();
 
 function getLanguageModel() {
     return window.LanguageModel;
@@ -262,6 +265,7 @@ let updateElement = null;
 
 function renderStreamedText(response, chatOutput) {
     updateElement.innerHTML = marked.parse(response);
+    document.getElementById("watermark-count").textContent = watermarkCounter.update(response);
     tokenCount++;
     if (tokenCount >= 2) {
         if (postPrefillTime) {
@@ -285,7 +289,30 @@ function renderStreamedText(response, chatOutput) {
     chatOutput.scrollTop = chatOutput.scrollHeight;
 }
 
+function clearChat() {
+    if (session) session.destroy();
+    session = null;
+    sessionTools = new Map();
+    const output = document.getElementById("chat-output");
+    output.replaceChildren(chatEmptyState.cloneNode(true));
+    output.scrollTop = 0;
+    updateElement = null;
+    tokenCount = 0;
+    currentCps = 0;
+    currentTps = 0;
+    initialDelay = null;
+    startTime = null;
+    postPrefillTime = null;
+    postPrefillC = null;
+    postPrefillT = null;
+    watermarkCounter.reset();
+    for (const id of ["chars-per-sec", "tokens-per-sec", "start-latency", "watermark-count"]) {
+        document.getElementById(id).textContent = "0";
+    }
+}
+
 async function sendMessage(input) {
+    watermarkCounter.startResponse();
     const chatOutput = document.getElementById("chat-output");
     document.getElementById("chat-empty-state")?.remove();
     
@@ -404,10 +431,17 @@ async function onSend() {
     sendIcon.textContent = "stop";
     inputField.value = "";
 
-    await sendMessage(inputText);
-    
-    isStreaming = false;
-    sendIcon.textContent = "send";
+    const pending = sendMessage(inputText);
+    responsePromise = pending;
+    try {
+        await pending;
+    } finally {
+        if (responsePromise === pending) {
+            responsePromise = null;
+            isStreaming = false;
+            sendIcon.textContent = "send";
+        }
+    }
 }
 
 // Initialize everything
@@ -439,6 +473,7 @@ async function initialize() {
 }
 
 window.addEventListener("load", () => {
+    chatEmptyState = document.getElementById("chat-empty-state").cloneNode(true);
     initializeSettings();
     initializeTools();
     initialize();
@@ -458,11 +493,14 @@ window.addEventListener("load", () => {
     const applyButton = document.querySelector('.btn.btn-secondary.w-90.mt-2');
     if (applyButton) {
         applyButton.addEventListener("click", async () => {
-            if (isStreaming) {
-                showError("Stop the current response before applying settings.");
-                return;
-            }
+            const sendButton = document.getElementById("send-btn");
+            applyButton.disabled = true;
+            sendButton.disabled = true;
             try {
+                sessionController?.abort();
+                creationController?.abort();
+                if (responsePromise) await responsePromise;
+                clearChat();
                 appliedTools = readToolSettings();
                 if (supportsToolUse()) {
                     document.getElementById("tools-status").textContent = `Selected tools: ${appliedTools.size}.`;
@@ -472,6 +510,9 @@ window.addEventListener("load", () => {
                 console.error("Invalid tool settings:", error);
                 document.getElementById("tools-status").textContent = "Invalid tool settings: " + error.message;
                 showError("Invalid tool settings: " + error.message);
+            } finally {
+                applyButton.disabled = false;
+                sendButton.disabled = false;
             }
         });
     }

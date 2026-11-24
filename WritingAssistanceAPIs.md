@@ -65,6 +65,13 @@ Run focused tests with `node --test speech.test.js`.
 
 ## Writing assistance interfaces
 
+The [Chat](index.htm) and [Writing Assistance](task_api.htm) bottom bars show
+`Watermark: {count}`, counting exact `U+200B U+034F U+2060 U+200B` sequences
+in raw model output. Counts update during streaming and accumulate across
+responses on each page, including partial responses before a stop or error.
+User input and tool results are not counted. Applying Chat settings or clearing
+Writing Assistance content resets the count; reloading either page also resets it.
+
 [Exposed=Window, SecureContext]
 interface Summarizer {
   static Promise<Summarizer> create(optional SummarizerCreateOptions options = {});
